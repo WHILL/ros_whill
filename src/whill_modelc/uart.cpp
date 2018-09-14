@@ -18,10 +18,6 @@
 
 #include "ros/ros.h"
 
-//Ubuntuのポート設定
-//#define SERIAL_PORT "/dev/ttyUSB0" // For general USB-Serial converter
-#define SERIAL_PORT "/dev/ttyTHS2" // For Jetson TX2 on Aetina's ACE-N510 carrier board
-
 //#define BAUDRATE B19200 //Model A
 #define BAUDRATE B38400 //Model C
 
@@ -100,12 +96,12 @@ int recvDataUART(int fd, char recv_buf[])
      return len;
 }
 	  
-int initializeUART(int *fd)
+int initializeUART(int *fd,std::string port)
 {
      /* fd :  シリアル通信ファイルディスクリプタ */
      struct termios newtio;    /* シリアル通信設定 */
          
-     if(!(*fd = open(SERIAL_PORT, O_RDWR))){
+     if(!(*fd = open(port.c_str(), O_RDWR))){
        fprintf(stderr, "Can't open UART device\n");
        return -1; /* デバイスをオープンする */
      }

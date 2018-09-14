@@ -1,0 +1,19 @@
+<launch>
+    <arg name="model" default="$(find ros_whill)/modelc.urdf" />
+    <arg name="gui" default="true" />
+    <param name="robot_description" textfile="$(arg model)" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+        <remap from="/joint_states" to="/whill/states/jointState" />
+    </node>
+
+    <arg name="serialport" default="$(env TTY_WHILL)"/>
+    <node pkg="ros_whill" type="whill_modelc_controller" name="whill_modelc_controller" output="screen">
+        <param name="serialport" value="$(arg serialport)"/>
+    </node>
+    
+    <node pkg="ros_whill" type="whill_modelc_publisher" name="whill_modelc_publisher" output="screen" >
+        <param name="wheel_radius" value="0.135"/>
+        <param name="serialport" value="$(arg serialport)"/>
+    </node>
+</launch>
+

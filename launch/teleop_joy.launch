@@ -1,0 +1,8 @@
+<launch>
+
+    <node name="joynode" pkg="joy" type="joy_node" args="" output="screen">
+        <param name="autorepeat_rate" value="10"/>
+        <remap from="/joy" to="/whill/controller/joy" />
+    </node>  
+
+</launch>

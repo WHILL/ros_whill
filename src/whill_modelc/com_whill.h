@@ -2,7 +2,9 @@
  * Functions to communcate with WHILL via UART
  * author : Kazumichi Shirai
  */
-int initializeComWHILL(int *fd);
+#include <string.h>
+
+int initializeComWHILL(int *fd,std::string port);
 void closeComWHILL(int fd);
 int sendJoystickStop(int fd);
 //int sendSpeedDown(int fd, int rate); // removed on Model C

@@ -35,9 +35,9 @@ enum{
 #define USER_CTRL_ENABLE (1)
 #define ENABLE (1)
 
-int initializeComWHILL(int *fd)
+int initializeComWHILL(int *fd,std::string port)
 {
-     if(initializeUART(fd) < 0){
+     if(initializeUART(fd,port) < 0){
 	  fprintf(stderr, "Can't initizalize UART to communicate with WHILL\n");
 	  return -1;
      }

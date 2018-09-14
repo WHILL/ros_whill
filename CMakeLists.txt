@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -52,7 +53,6 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    msgWhillModelC.msg
    msgWhillSpeedProfile.msg
-   msgWhillSetJoystick.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -137,7 +137,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/ros_whill_node.cpp)
-add_executable(whill_modelc_publisher src/whill_modelc_publisher.cpp src/whill_modelc/uart.cpp src/whill_modelc/com_whill.cpp)
+add_executable(whill_modelc_publisher src/whill_modelc_publisher.cpp src/whill_modelc/uart.cpp src/whill_modelc/com_whill.cpp src/odom.cpp)
 add_executable(whill_modelc_controller src/whill_modelc_controller.cpp src/whill_modelc/uart.cpp src/whill_modelc/com_whill.cpp)
 
 ## Rename C++ executable without prefix

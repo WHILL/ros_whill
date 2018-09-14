@@ -1,8 +1,9 @@
 #include "ros/ros.h"
+#include "sensor_msgs/Joy.h"
+
 #include "ros_whill/srvSetSpeedProfile.h"
 #include "ros_whill/srvSetPower.h"
 #include "ros_whill/srvSetBatteryVoltageOut.h"
-#include "ros_whill/msgWhillSetJoystick.h"
 #include "whill_modelc/com_whill.h"
 
 #include <stdio.h>
@@ -135,10 +136,11 @@ bool set_battery_voltage_out_srv(ros_whill::srvSetBatteryVoltageOut::Request &re
 
 
 // Set Joystick
-void whillSetjoystickMsgCallback(const ros_whill::msgWhillSetJoystick::ConstPtr& msg)
+
+void whillSetJoyMsgCallback(const sensor_msgs::Joy::ConstPtr& joy)
 {
-	int joy_front = msg->front;
-	int joy_side = msg->side;
+	int joy_side  = -joy->axes[0] * 100.0f;
+	int joy_front = joy->axes[1] * 100.0f;
 
 	// value check
 	if(joy_front < -100) joy_front = -100;
@@ -157,13 +159,20 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "whill_modelc_controller");
 	ros::NodeHandle nh;
 
+	ros::NodeHandle nh_("~");
+	
+	std::string serialport = "/dev/ttyUSB0";
+	nh_.getParam("serialport", serialport);
+
+	// Services
 	ros::ServiceServer set_speed_profile_svr = nh.advertiseService("set_speed_profile_srv", set_speed_profile_srv);
 	ros::ServiceServer set_power_svr = nh.advertiseService("set_power_srv", set_power_srv);
 	ros::ServiceServer set_battery_voltage_out_svr = nh.advertiseService("set_battery_voltage_out_srv", set_battery_voltage_out_srv);
 
-	ros::Subscriber whill_setjoystick_sub = nh.subscribe("whill_setjoystick", 100, whillSetjoystickMsgCallback);
+	// Subscribers
+	ros::Subscriber whill_setjoy_sub = nh.subscribe("/whill/controller/joy", 100, whillSetJoyMsgCallback);
 
-	initializeComWHILL(&whill_fd);
+	initializeComWHILL(&whill_fd,serialport);
 
 	ros::spin();
 
