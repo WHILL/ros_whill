@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="ros_whill" type="whill_modelc_controller" name="whill_modelc_controller" output="screen"/>
+    <node pkg="ros_whill" type="whill_modelc_publisher" name="whill_modelc_publisher" output="screen" />
+</launch>
+
