@@ -189,8 +189,7 @@ int main(int argc, char **argv)
 		sendStopSendingData(whill_fd);
 		usleep(2000);
 		do
-		{
-			// flush receive buffer;
+		{ //flush old buffer
 			len = recvDataWHILL(whill_fd, recv_buf);
 		} while (len > 0);
 		sendStartSendingData(whill_fd, 25, DATASET_NUM_ZERO, i);
@@ -218,7 +217,6 @@ int main(int argc, char **argv)
 			i++;
 		}
 	}
-
 
 	// send StopSendingData command
 	sendStopSendingData(whill_fd);
