@@ -28,7 +28,16 @@ SOFTWARE.
  */
 #include <string.h>
 
-int initializeComWHILL(int *fd,std::string port);
+enum whill_const
+{
+    DATASET_NUM_ZERO = 0,
+    DATASET_NUM_ONE  = 1,
+    POWERON_RESPONSE_DATA = 0x52,
+    SPEED_MODE       = 0,
+    SEND_INTERVAL    = 10,
+};
+
+int initializeComWHILL(int *fd, std::string port);
 void closeComWHILL(int fd);
 int sendJoystickStop(int fd);
 //int sendSpeedDown(int fd, int rate); // removed on Model C

@@ -55,10 +55,6 @@ SOFTWARE.
 #include <limits>
 
 #define MAX_EVENTS (10)
-#define DATASET_NUM_ZERO (0)
-#define DATASET_NUM_ONE (1)
-#define SPEED_MODE (0)
-#define SEND_INTERVAL (10)
 
 #define ACC_CONST (0.000122)
 #define GYR_CONST (0.004375)
@@ -163,8 +159,6 @@ int main(int argc, char **argv)
 	}
 	ROS_INFO("param: send_interval=%d", send_interval);
 
-
-
 	// WHILL setup
 	struct epoll_event ev;
 	struct epoll_event events[MAX_EVENTS];
@@ -184,18 +178,28 @@ int main(int argc, char **argv)
 	// register Fd to epoll
 	registerFdToEpoll(&ev, epollfd, whill_fd);
 
+	// Power On WHILL
+	sendPowerOn(whill_fd);
+	usleep(2000);
+
 	// Send StartSendingData command: dataset 0 for all speed mode
-	for(int i = 0; i < 6; i ++)
-	{
-		//ROS_INFO("%s, %d", __func__, __LINE__);
+	i = 0;
+	while(i < 6)
+	{		
 		sendStopSendingData(whill_fd);
 		usleep(2000);
-		//ROS_INFO("%s, %d", __func__, __LINE__);
+		do
+		{
+			// flush receive buffer;
+			len = recvDataWHILL(whill_fd, recv_buf);
+		} while (len > 0);
 		sendStartSendingData(whill_fd, 25, DATASET_NUM_ZERO, i);
 		usleep(2000);
-		//ROS_INFO("%s, %d", __func__, __LINE__);
-		len = recvDataWHILL(whill_fd, recv_buf);
-		//ROS_INFO("%s, %d", __func__, __LINE__);
+		do
+		{
+			len = recvDataWHILL(whill_fd, recv_buf);
+		} while (len == 0);
+		
 		if(recv_buf[0] == DATASET_NUM_ZERO && len == 12)
 		{
 			ros_whill::msgWhillSpeedProfile msg_sp;
@@ -211,6 +215,7 @@ int main(int argc, char **argv)
 			msg_sp.td1 = int(recv_buf[10] & 0xff);
 			whill_speed_profile_pub.publish(msg_sp);
 			ROS_INFO("Speed profile %ld is published", msg_sp.s1);
+			i++;
 		}
 	}
 
@@ -247,22 +252,13 @@ int main(int argc, char **argv)
 			// Receive Data From WHILL
 			if(events[i].data.fd == whill_fd) {
 				len = recvDataWHILL(whill_fd, recv_buf);
-				//ROS_INFO("recv_buf[0] = 0x%x, len = %d", recv_buf[0], len);
-				if(recv_buf[0] == DATASET_NUM_ONE && len == 30)
+				ROS_DEBUG("recv_buf[0] = 0x%x, len = %d", recv_buf[0], len);
+				if(recv_buf[0] == POWERON_RESPONSE_DATA && len == 2)
 				{
-					//unsigned char checksum = 0x00;
-					//for(int i = 0; i<=29; i++){
-					//	checksum ^= static_cast<unsigned char>(recv_buf[i]);
-					//}
-					//unsigned char cs = static_cast<unsigned char>(recv_buf[30]);
-
-					//printf("%d %d",recv_buf[30],cs);
-					//if(checksum != cs){
-					//	ROS_WARN("Checksum Failed 0x%02x:0x%02x",checksum,cs-checksum);
-					//	continue;
-					//}
-
-
+					ROS_INFO("WHILL: Successfully powered on.");
+				}
+				else if(recv_buf[0] == DATASET_NUM_ONE && len == 30)
+				{
 					ros::Time currentTime = ros::Time::now();
 					joy.header.stamp = currentTime;
 					jointState.header.stamp = ros::Time::now();
