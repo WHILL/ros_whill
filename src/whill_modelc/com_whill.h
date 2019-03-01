@@ -32,7 +32,7 @@ int initializeComWHILL(int *fd,std::string port);
 void closeComWHILL(int fd);
 int sendJoystickStop(int fd);
 //int sendSpeedDown(int fd, int rate); // removed on Model C
-int recvDataWHILL(int fd, char recv_buf[]);
+int recvDataWHILL(int fd, unsigned char recv_buf[]);
 int sendJoystick(int fd, char fb, char lr);
 int releaseJoystick(int fd);
 //int sendStartSendingData(int fd, int t, char data_set_num); 

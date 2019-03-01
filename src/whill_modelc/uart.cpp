@@ -58,20 +58,24 @@ int sendCmdUART(int fd, char cmd[], int len)
      return 1;
 }
 
-int recvDataUART(int fd, char recv_buf[])
+int recvDataUART(int fd, unsigned char recv_buf[])
 {
      int size;
      char prtcl;
      char len, remain_len;
-     char tmp_recv_buf[128];
+     unsigned char tmp_recv_buf[128];
      int i, j,idx;
      int retry = 3;
-     int check_sum = 0;
+     unsigned char check_sum = 0;
    
      //** Recv Protocol Sign **//
-     size = read(fd, tmp_recv_buf, 1);
+     do
+     {
+     	size = read(fd, tmp_recv_buf, 1);
+	//fprintf(stdout, "size=%d\n", (int)size);
+     	if(size <= 0) return -1;
+     }while((tmp_recv_buf[0] & 0xff) != PROTOCOL_SIGN);
 
-     if((tmp_recv_buf[0] & 0xff) != PROTOCOL_SIGN) return -1;
      //fprintf(stdout, "protocl sign = %d\n", tmp_recv_buf[0]);
      check_sum ^= tmp_recv_buf[0];
 
@@ -84,7 +88,7 @@ int recvDataUART(int fd, char recv_buf[])
      idx = 0;
 
      //** Recv Data **//
-     while(remain_len){
+     while(remain_len > 0){
 	  size = read(fd, tmp_recv_buf, remain_len);//recv data
 	  //fprintf(stdout, "remain_len = %d, size = %d\n", remain_len, size);
 	  if(size < 0)
@@ -100,22 +104,22 @@ int recvDataUART(int fd, char recv_buf[])
      }
 
      //** Check check_sum **//
-     for(i=0;i<len-1;i++){
-	     check_sum ^= recv_buf[i];
+     for(i=0;i<len-1;i++)
+     {
+	 check_sum ^= recv_buf[i];
      }
-     if(check_sum != recv_buf[len-1]){
-       if(check_sum != recv_buf[len-1]){
+     if(check_sum != recv_buf[len-1])
+     {
 	 fprintf(stderr, "checksum err, check_sum = %d, recv_buf = %d\n",check_sum, recv_buf[len-1]);
 	 fprintf(stderr, "len = %d\n", len);
 	 int debug_idx = 0;
 	 fprintf(stderr, "0xAF,");
-	 fprintf(stderr, "0x%x,", len);
+	 fprintf(stderr, "0x%02x,", len);
 	 for(debug_idx=0;debug_idx<len;debug_idx++){
-	   fprintf(stderr, "0x%x,",recv_buf[debug_idx]);
+	   fprintf(stderr, "0x%02x,",recv_buf[debug_idx]);
 	 }
-	 //fprintf(stderr, "\n",recv_buf[debug_idx]);
+	 fprintf(stderr, "\n");
 	 return -1;
-       }
      }
      return len;
 }

@@ -105,12 +105,21 @@ bool set_power_srv(ros_whill::srvSetPower::Request &req, ros_whill::srvSetPower:
 	// power on
 	else if (req.p0 == 1)
 	{
-		char recv_buf[128];
+		unsigned char recv_buf[128];
 		int len;
 
 		sendPowerOn(whill_fd);
 		usleep(2000);
 		len = recvDataWHILL(whill_fd, recv_buf);
+		ROS_INFO("len=%d, idx0=0x%x", len, recv_buf[POWERON_RESPONSE_DATA_IDX]);
+
+		// Intentionally repeat sendPowerOn.
+		//usleep(20000);
+
+		sendPowerOn(whill_fd);
+		usleep(2000);
+		len = recvDataWHILL(whill_fd, recv_buf);
+		ROS_INFO("len=%d, idx1=0x%x", len, recv_buf[POWERON_RESPONSE_DATA_IDX]);
 		
 		// success
 		if(recv_buf[POWERON_RESPONSE_DATA_IDX] == POWERON_RESPONSE_DATA)

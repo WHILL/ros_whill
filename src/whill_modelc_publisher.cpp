@@ -146,7 +146,7 @@ int main(int argc, char **argv)
 
 	tf::TransformBroadcaster odom_broadcaster_;
 
-    ros::NodeHandle nh_("~");  // For parameters
+        ros::NodeHandle nh_("~");  // For parameters
 	double wheel_radius = 0.135;
 	nh_.getParam("wheel_radius", wheel_radius);
 
@@ -170,7 +170,7 @@ int main(int argc, char **argv)
 	struct epoll_event events[MAX_EVENTS];
 	int epollfd, nfds;
 	int whill_fd; // file descriptor for UART to communicate with WHILL
-	char recv_buf[128];
+	unsigned char recv_buf[128];
 	int len, idx;
 	int i;
 
@@ -187,11 +187,15 @@ int main(int argc, char **argv)
 	// Send StartSendingData command: dataset 0 for all speed mode
 	for(int i = 0; i < 6; i ++)
 	{
+		//ROS_INFO("%s, %d", __func__, __LINE__);
 		sendStopSendingData(whill_fd);
 		usleep(2000);
+		//ROS_INFO("%s, %d", __func__, __LINE__);
 		sendStartSendingData(whill_fd, 25, DATASET_NUM_ZERO, i);
 		usleep(2000);
+		//ROS_INFO("%s, %d", __func__, __LINE__);
 		len = recvDataWHILL(whill_fd, recv_buf);
+		//ROS_INFO("%s, %d", __func__, __LINE__);
 		if(recv_buf[0] == DATASET_NUM_ZERO && len == 12)
 		{
 			ros_whill::msgWhillSpeedProfile msg_sp;
@@ -243,13 +247,14 @@ int main(int argc, char **argv)
 			// Receive Data From WHILL
 			if(events[i].data.fd == whill_fd) {
 				len = recvDataWHILL(whill_fd, recv_buf);
-				if(recv_buf[0] == DATASET_NUM_ONE && len == 31)
+				//ROS_INFO("recv_buf[0] = 0x%x, len = %d", recv_buf[0], len);
+				if(recv_buf[0] == DATASET_NUM_ONE && len == 30)
 				{
-					unsigned char checksum = 0x00;
-					for(int i = 0; i<=29; i++){
-						checksum ^= static_cast<unsigned char>(recv_buf[i]);
-					}
-					unsigned char cs = static_cast<unsigned char>(recv_buf[30]);
+					//unsigned char checksum = 0x00;
+					//for(int i = 0; i<=29; i++){
+					//	checksum ^= static_cast<unsigned char>(recv_buf[i]);
+					//}
+					//unsigned char cs = static_cast<unsigned char>(recv_buf[30]);
 
 					//printf("%d %d",recv_buf[30],cs);
 					//if(checksum != cs){
