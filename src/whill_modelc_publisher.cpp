@@ -56,6 +56,9 @@ SOFTWARE.
 
 #define MAX_EVENTS (10)
 
+#define DATASET_LEN_V01 (30)
+#define DATASET_LEN_V02 (31) // Provision for future release.
+
 #define ACC_CONST (0.000122)
 #define GYR_CONST (0.004375)
 #define MANGLE_CONST (0.001)
@@ -255,12 +258,12 @@ int main(int argc, char **argv)
 				{
 					ROS_INFO("WHILL: Successfully powered on.");
 				}
-				else if(recv_buf[0] == DATASET_NUM_ONE && len == 30)
+				else if(recv_buf[0] == DATASET_NUM_ONE && (len == DATASET_LEN_V01 || len == DATASET_LEN_V02))
 				{
 					ros::Time currentTime = ros::Time::now();
 					joy.header.stamp = currentTime;
-					jointState.header.stamp = ros::Time::now();
-					imu.header.stamp = ros::Time::now();
+					jointState.header.stamp = currentTime;
+					imu.header.stamp = currentTime;
 
 					msg.acc_x = calc_16bit_signed_data(recv_buf[1], recv_buf[2]) * ACC_CONST;
 					msg.acc_y = calc_16bit_signed_data(recv_buf[3], recv_buf[4]) * ACC_CONST;
@@ -286,10 +289,23 @@ int main(int argc, char **argv)
 					msg.speed_mode_indicator = int(recv_buf[27] & 0xff);
 
 					
-					unsigned int time_ms = (unsigned int)(recv_buf[29] & 0xff);
+					unsigned int time_diff_ms = 0;
+					unsigned int time_ms = 0;
 					static unsigned int past_time_ms = 0;
-					unsigned int time_diff_ms = calc_time_diff(past_time_ms,time_ms);
-					past_time_ms = time_ms;
+                    static ros::Time pastTime = ros::Time(0);
+					if(len == DATASET_LEN_V02)
+					{
+						time_ms = static_cast<unsigned int>(recv_buf[29] & 0xff);
+					    time_diff_ms = calc_time_diff(past_time_ms,time_ms);
+                        past_time_ms = time_ms;
+                        ROS_DEBUG("New style time count (Experimental). Interval=%d", time_diff_ms);
+					}
+					else
+					{
+					    time_diff_ms = static_cast<unsigned int>((currentTime - pastTime).toSec() * 1000);
+                        pastTime = currentTime;
+                        ROS_DEBUG("Conventional style time count. Interval=%d", time_diff_ms);
+					}
 
 
 					// IMU message
@@ -308,8 +324,9 @@ int main(int argc, char **argv)
 					// Battery State
 
 					batteryState.voltage                 = 25.2; //[V]
-					batteryState.current                 = -msg.battery_current / 1000.0f; // mA -> A
+					batteryState.current                 = msg.battery_current / 1000.0f; // mA -> A
 					batteryState.charge                  = std::numeric_limits<float>::quiet_NaN();
+                    batteryState.capacity                = std::numeric_limits<float>::quiet_NaN();
 					batteryState.design_capacity         = 10.04;//[Ah]
 					batteryState.percentage              = msg.battery_power / 100.0f; // Percentage
 					batteryState.power_supply_status     = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
