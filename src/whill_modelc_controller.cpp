@@ -51,70 +51,70 @@ int whill_fd; // file descriptor for UART to communicate with WHILL
 bool set_speed_profile_srv(ros_whill::srvSetSpeedProfile::Request &req, ros_whill::srvSetSpeedProfile::Response &res)
 {
 
-	// value check
-	if(0 <= req.s1 && req.s1 <= 5
-		&& 8 <= req.fm1 && req.fm1 <= 60
-		&& 10 <= req.fa1 && req.fa1 <= 90
-		&& 10 <= req.fd1 && req.fd1 <= 160
-		&& 8 <= req.rm1 && req.rm1 <= 60
-		&& 10 <= req.ra1 && req.ra1 <= 90
-		&& 10 <= req.rd1 && req.rd1 <= 160
-		&& 8 <= req.tm1 && req.tm1 <= 60
-		&& 10 <= req.ta1 && req.ta1 <= 90
-		&& 10 <= req.td1 && req.td1 <= 160)
-	{
-		ROS_INFO("Speed profile is set");
-		sendSetSpeed(whill_fd, req.s1, req.fm1, req.fa1, req.fd1, req.rm1, req.ra1, req.rd1, req.tm1, req.ta1, req.td1);
-		
-		res.result = 1;
-		return true;
-	}
-	else
-	{
-		ROS_WARN("wrong parameter is assigned.");
-		ROS_WARN("s1 must be assingned between 0 - 5");
-		ROS_WARN("fm1 must be assingned between 8 - 60");
-		ROS_WARN("fa1 must be assingned between 10 - 90");
-		ROS_WARN("fd1 must be assingned between 10 - 160");
-		ROS_WARN("rm1 must be assingned between 8 - 60");
-		ROS_WARN("ra1 must be assingned between 10 - 90");
-		ROS_WARN("rd1 must be assingned between 10 - 160");
-		ROS_WARN("tm1 must be assingned between 8 - 60");
-		ROS_WARN("ta1 must be assingned between 10 - 90");
-		ROS_WARN("td1 must be assingned between 10 - 160");
-		res.result = -1;
-		return false;
-	}	
+    // value check
+    if(0 <= req.s1 && req.s1 <= 5
+        && 8 <= req.fm1 && req.fm1 <= 60
+        && 10 <= req.fa1 && req.fa1 <= 90
+        && 10 <= req.fd1 && req.fd1 <= 160
+        && 8 <= req.rm1 && req.rm1 <= 60
+        && 10 <= req.ra1 && req.ra1 <= 90
+        && 10 <= req.rd1 && req.rd1 <= 160
+        && 8 <= req.tm1 && req.tm1 <= 60
+        && 10 <= req.ta1 && req.ta1 <= 90
+        && 10 <= req.td1 && req.td1 <= 160)
+    {
+        ROS_INFO("Speed profile is set");
+        sendSetSpeed(whill_fd, req.s1, req.fm1, req.fa1, req.fd1, req.rm1, req.ra1, req.rd1, req.tm1, req.ta1, req.td1);
+        
+        res.result = 1;
+        return true;
+    }
+    else
+    {
+        ROS_WARN("wrong parameter is assigned.");
+        ROS_WARN("s1 must be assingned between 0 - 5");
+        ROS_WARN("fm1 must be assingned between 8 - 60");
+        ROS_WARN("fa1 must be assingned between 10 - 90");
+        ROS_WARN("fd1 must be assingned between 10 - 160");
+        ROS_WARN("rm1 must be assingned between 8 - 60");
+        ROS_WARN("ra1 must be assingned between 10 - 90");
+        ROS_WARN("rd1 must be assingned between 10 - 160");
+        ROS_WARN("tm1 must be assingned between 8 - 60");
+        ROS_WARN("ta1 must be assingned between 10 - 90");
+        ROS_WARN("td1 must be assingned between 10 - 160");
+        res.result = -1;
+        return false;
+    }    
 }
 
 
 // Set Power
 bool set_power_srv(ros_whill::srvSetPower::Request &req, ros_whill::srvSetPower::Response &res)
 {
-	// power off
-	if(req.p0 == 0)
-	{
-		sendPowerOff(whill_fd);
-		ROS_DEBUG("WHILL: Requested Power Off");
-		res.result = 1;
-		return true;
-	}
-	// power on
-	else if (req.p0 == 1)
-	{
-		sendPowerOn(whill_fd);
-		usleep(2000);
+    // power off
+    if(req.p0 == 0)
+    {
+        sendPowerOff(whill_fd);
+        ROS_DEBUG("WHILL: Requested Power Off");
+        res.result = 1;
+        return true;
+    }
+    // power on
+    else if (req.p0 == 1)
+    {
+        sendPowerOn(whill_fd);
+        usleep(2000);
 
-		ROS_DEBUG("WHILL: Requested Power On");
-		res.result = 1;
-		return true;
-	}
-	else
-	{
-		ROS_WARN("p0 must be assinged 0 or 1");
-		res.result = -1;
-		return false;
-	}
+        ROS_DEBUG("WHILL: Requested Power On");
+        res.result = 1;
+        return true;
+    }
+    else
+    {
+        ROS_WARN("p0 must be assinged 0 or 1");
+        res.result = -1;
+        return false;
+    }
 
 }
 
@@ -122,20 +122,20 @@ bool set_power_srv(ros_whill::srvSetPower::Request &req, ros_whill::srvSetPower:
 // Set Battery Voltage out
 bool set_battery_voltage_out_srv(ros_whill::srvSetBatteryVoltageOut::Request &req, ros_whill::srvSetBatteryVoltageOut::Response &res)
 {
-	if(req.v0 == 0 || req.v0 == 1)
-	{
-		sendSetBatteryOut(whill_fd, req.v0);
-		if(req.v0 == 0) ROS_INFO("battery voltage out: disable");
-		if(req.v0 == 1) ROS_INFO("battery voltage out: enable");
-		res.result = 1;
-		return true;
-	}
-	else
-	{
-		ROS_INFO("v0 must be assigned 0 or 1");
-		res.result = -1;
-		return false;
-	}
+    if(req.v0 == 0 || req.v0 == 1)
+    {
+        sendSetBatteryOut(whill_fd, req.v0);
+        if(req.v0 == 0) ROS_INFO("battery voltage out: disable");
+        if(req.v0 == 1) ROS_INFO("battery voltage out: enable");
+        res.result = 1;
+        return true;
+    }
+    else
+    {
+        ROS_INFO("v0 must be assigned 0 or 1");
+        res.result = -1;
+        return false;
+    }
 
 }
 
@@ -144,46 +144,46 @@ bool set_battery_voltage_out_srv(ros_whill::srvSetBatteryVoltageOut::Request &re
 
 void whillSetJoyMsgCallback(const sensor_msgs::Joy::ConstPtr& joy)
 {
-	int joy_side  = -joy->axes[0] * 100.0f;
-	int joy_front = joy->axes[1] * 100.0f;
+    int joy_side  = -joy->axes[0] * 100.0f;
+    int joy_front = joy->axes[1] * 100.0f;
 
-	// value check
-	if(joy_front < -100) joy_front = -100;
-	if(joy_front > 100)  joy_front = 100;
-	if(joy_side < -100) joy_side = -100;
-	if(joy_side > 100)  joy_side = 100;
+    // value check
+    if(joy_front < -100) joy_front = -100;
+    if(joy_front > 100)  joy_front = 100;
+    if(joy_side < -100) joy_side = -100;
+    if(joy_side > 100)  joy_side = 100;
 
-	sendJoystick(whill_fd, joy_front, joy_side);
+    sendJoystick(whill_fd, joy_front, joy_side);
 
 }
 
 
 int main(int argc, char **argv)
 {
-	// ROS setup
-	ros::init(argc, argv, "whill_modelc_controller");
-	ros::NodeHandle nh;
+    // ROS setup
+    ros::init(argc, argv, "whill_modelc_controller");
+    ros::NodeHandle nh;
 
-	ros::NodeHandle nh_("~");
-	
-	std::string serialport = "/dev/ttyUSB0";
-	nh_.getParam("serialport", serialport);
+    ros::NodeHandle nh_("~");
+    
+    std::string serialport = "/dev/ttyUSB0";
+    nh_.getParam("serialport", serialport);
 
-	// Services
-	ros::ServiceServer set_speed_profile_svr = nh.advertiseService("set_speed_profile_srv", set_speed_profile_srv);
-	ros::ServiceServer set_power_svr = nh.advertiseService("set_power_srv", set_power_srv);
-	ros::ServiceServer set_battery_voltage_out_svr = nh.advertiseService("set_battery_voltage_out_srv", set_battery_voltage_out_srv);
+    // Services
+    ros::ServiceServer set_speed_profile_svr = nh.advertiseService("set_speed_profile_srv", set_speed_profile_srv);
+    ros::ServiceServer set_power_svr = nh.advertiseService("set_power_srv", set_power_srv);
+    ros::ServiceServer set_battery_voltage_out_svr = nh.advertiseService("set_battery_voltage_out_srv", set_battery_voltage_out_srv);
 
-	// Subscribers
-	ros::Subscriber whill_setjoy_sub = nh.subscribe("/whill/controller/joy", 100, whillSetJoyMsgCallback);
+    // Subscribers
+    ros::Subscriber whill_setjoy_sub = nh.subscribe("/whill/controller/joy", 100, whillSetJoyMsgCallback);
 
-	initializeComWHILL(&whill_fd,serialport);
+    initializeComWHILL(&whill_fd,serialport);
 
-	ros::spin();
+    ros::spin();
 
-	closeComWHILL(whill_fd);
+    closeComWHILL(whill_fd);
 
-	return 0;
+    return 0;
 }
 
 
