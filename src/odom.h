@@ -39,8 +39,8 @@ SOFTWARE.
                 long double theta;
             }Space2D;
 
-            static const double wheel_radius_ = 0.1325;
-            static const double wheel_tread_  = 0.248;
+            static constexpr double wheel_radius_ = 0.1325;
+            static constexpr double wheel_tread_  = 0.248;
 
             Space2D pose;
             Space2D velocity;

@@ -5,7 +5,6 @@ For general questions and requests, please visit https://whill.zendesk.com/hc/ja
 
 <img src="https://user-images.githubusercontent.com/2618822/45492944-89421c00-b7a8-11e8-9c92-22aa3f28f6e4.png" width=30%>
 
-
 ## ROS API
 
 ### Subscribed Topics
