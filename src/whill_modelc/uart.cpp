@@ -52,31 +52,46 @@ int sendCmdUART(int fd, char cmd[], int len)
 {
      if(write(fd, cmd, len) != len) 
      {
-	  fprintf(stderr, "fail to write command %02x \n", cmd[2]);
-	  return -1;
+          fprintf(stderr, "fail to write command %02x \n", cmd[2]);
+          return -1;
      }
      return 1;
 }
 
-int recvDataUART(int fd, char recv_buf[])
+int recvDataUART(int fd, unsigned char recv_buf[])
 {
      int size;
      char prtcl;
      char len, remain_len;
-     char tmp_recv_buf[128];
+     unsigned char tmp_recv_buf[128];
      int i, j,idx;
      int retry = 3;
-     int check_sum = 0;
+     unsigned char check_sum = 0;
+     unsigned int error_count = 0;
    
      //** Recv Protocol Sign **//
-     size = read(fd, tmp_recv_buf, 1);
+     error_count = 0;
+     do
+     {
+     	size = read(fd, tmp_recv_buf, 1);
+     	if(size < 0) return -1;
+          usleep(100);
+          if(error_count++ > 100) return -1;
+     }while((tmp_recv_buf[0] & 0xff) != PROTOCOL_SIGN);
 
-     if((tmp_recv_buf[0] & 0xff) != PROTOCOL_SIGN) return -1;
-     //fprintf(stdout, "protocl sign = %d\n", tmp_recv_buf[0]);
+     //fprintf(stdout, "protocl sign = %x\n", tmp_recv_buf[0]);
      check_sum ^= tmp_recv_buf[0];
 
      //** Recv Data length **//
-     size = read(fd, tmp_recv_buf, 1);
+     error_count = 0;
+     do
+     {
+          size = read(fd, tmp_recv_buf, 1);
+     	if(size < 0) return -1;
+          usleep(100);
+          if(error_count++ > 100) return -1;
+     } while (size == 0);
+     
      //fprintf(stdout, "data length = %d\n", tmp_recv_buf[0]);
      check_sum ^= tmp_recv_buf[0];
      len = tmp_recv_buf[0];
@@ -84,43 +99,46 @@ int recvDataUART(int fd, char recv_buf[])
      idx = 0;
 
      //** Recv Data **//
-     while(remain_len){
-	  size = read(fd, tmp_recv_buf, remain_len);//recv data
-	  //fprintf(stdout, "remain_len = %d, size = %d\n", remain_len, size);
-	  if(size < 0)
-	  {
-	       fprintf(stderr, "fail to read\n");
-	  }
-	  for(i=0;i<size;i++)
-	  {
-	       recv_buf[idx] = tmp_recv_buf[i];
-	       idx++;
-	  }
-	  remain_len = remain_len - size;
+     error_count = 0;
+     while(remain_len > 0){
+          size = read(fd, tmp_recv_buf, remain_len);//recv data
+          //fprintf(stdout, "remain_len = %d, size = %d\n", remain_len, size);
+          if(size < 0)
+          {
+               fprintf(stderr, "fail to read\n");
+               return -1;
+          }
+          for(i=0; i<size; i++)
+          {
+               recv_buf[idx] = tmp_recv_buf[i];
+               idx++;
+          }
+          remain_len = remain_len - size;
+          usleep(5000);
+          if(error_count++ > 100) return -1;
      }
 
      //** Check check_sum **//
-     for(i=0;i<len-1;i++){
-	     check_sum ^= recv_buf[i];
+     for(i=0;i<len-1;i++)
+     {
+          check_sum ^= recv_buf[i];
      }
-     if(check_sum != recv_buf[len-1]){
-       if(check_sum != recv_buf[len-1]){
-	 fprintf(stderr, "checksum err, check_sum = %d, recv_buf = %d\n",check_sum, recv_buf[len-1]);
-	 fprintf(stderr, "len = %d\n", len);
-	 int debug_idx = 0;
-	 fprintf(stderr, "0xAF,");
-	 fprintf(stderr, "0x%x,", len);
-	 for(debug_idx=0;debug_idx<len;debug_idx++){
-	   fprintf(stderr, "0x%x,",recv_buf[debug_idx]);
-	 }
-	 //fprintf(stderr, "\n",recv_buf[debug_idx]);
-	 return -1;
-       }
+     if(check_sum != recv_buf[len-1])
+     {
+          // fprintf(stderr, "checksum err, check_sum = %d, recv_buf = %d\n",check_sum, recv_buf[len-1]);
+          // fprintf(stderr, "len = %d\n", len);
+          // int debug_idx = 0;
+          // fprintf(stderr, "0xAF, 0x%02x,", len);
+          // for(debug_idx=0;debug_idx<len;debug_idx++){
+          //      fprintf(stderr, "0x%02x,",recv_buf[debug_idx]);
+          // }
+          // fprintf(stderr, "\n");
+          return -1;
      }
      return len;
 }
 	  
-int initializeUART(int *fd,std::string port)
+int initializeUART(int *fd, std::string port)
 {
      /* fd :  シリアル通信ファイルディスクリプタ */
      struct termios newtio;    /* シリアル通信設定 */
@@ -136,10 +154,12 @@ int initializeUART(int *fd,std::string port)
      newtio.c_cflag = (BAUDRATE | CS8 | CLOCAL | CREAD | CSTOPB);
  
      newtio.c_iflag = (IGNPAR); //Ignore frame error and parity error
-     newtio.c_oflag = 0;
-     //newtio.c_lflag = ICANON; /* カノニカルモード */
-     newtio.c_lflag = 0; /* 非カノニカルモード */
- 
+ 	newtio.c_oflag = 0;
+					//	非カノニカルモード
+	newtio.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+	newtio.c_cc[VMIN] = 0;		//	ノンブロッキング
+	newtio.c_cc[VTIME]= 0;
+
      ioctl(*fd, TCSETS, &newtio);       /* ポートの設定を有効にする */
 
      return 1;

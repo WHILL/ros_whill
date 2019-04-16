@@ -45,9 +45,6 @@ SOFTWARE.
 #include <sys/time.h>
 #include <math.h>
 
-#define POWERON_RESPONSE_DATA_IDX (0)
-#define POWERON_RESPONSE_DATA (0x52)
-
 int whill_fd; // file descriptor for UART to communicate with WHILL
 
 // Set Speed Profile
@@ -98,35 +95,19 @@ bool set_power_srv(ros_whill::srvSetPower::Request &req, ros_whill::srvSetPower:
 	if(req.p0 == 0)
 	{
 		sendPowerOff(whill_fd);
-		ROS_INFO("WHILL wakes down\n");
+		ROS_DEBUG("WHILL: Requested Power Off");
 		res.result = 1;
 		return true;
 	}
 	// power on
 	else if (req.p0 == 1)
 	{
-		char recv_buf[128];
-		int len;
-
 		sendPowerOn(whill_fd);
 		usleep(2000);
-		len = recvDataWHILL(whill_fd, recv_buf);
-		
-		// success
-		if(recv_buf[POWERON_RESPONSE_DATA_IDX] == POWERON_RESPONSE_DATA)
-		{
-			ROS_INFO("WHILL wakes up");
-			res.result = 1;
-			return true;
-		}
-		// fail
-		else
-		{
-			ROS_WARN("WHILL didn't wake up");
-			res.result = -1;
-			return false;
-		}
-		
+
+		ROS_DEBUG("WHILL: Requested Power On");
+		res.result = 1;
+		return true;
 	}
 	else
 	{

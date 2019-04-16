@@ -124,7 +124,7 @@ int sendSpeedDown(int fd, int rate)
 }
 */
 
-int recvDataWHILL(int fd, char recv_buf[])
+int recvDataWHILL(int fd, unsigned char recv_buf[])
 {
      return recvDataUART(fd, recv_buf);
 }
@@ -199,7 +199,8 @@ int sendPowerOn(int fd)
 
      cmd[0] = SET_POWER;
      cmd[1] = 1;
-
+     sendWHILLCmd(fd, cmd, num_cmd);
+     usleep(20000);
      return sendWHILLCmd(fd, cmd, num_cmd);
 }     
 

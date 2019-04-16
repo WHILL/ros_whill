@@ -28,11 +28,20 @@ SOFTWARE.
  */
 #include <string.h>
 
-int initializeComWHILL(int *fd,std::string port);
+enum whill_const
+{
+    DATASET_NUM_ZERO = 0,
+    DATASET_NUM_ONE  = 1,
+    POWERON_RESPONSE_DATA = 0x52,
+    SPEED_MODE       = 0,
+    SEND_INTERVAL    = 10,
+};
+
+int initializeComWHILL(int *fd, std::string port);
 void closeComWHILL(int fd);
 int sendJoystickStop(int fd);
 //int sendSpeedDown(int fd, int rate); // removed on Model C
-int recvDataWHILL(int fd, char recv_buf[]);
+int recvDataWHILL(int fd, unsigned char recv_buf[]);
 int sendJoystick(int fd, char fb, char lr);
 int releaseJoystick(int fd);
 //int sendStartSendingData(int fd, int t, char data_set_num); 

@@ -55,10 +55,9 @@ SOFTWARE.
 #include <limits>
 
 #define MAX_EVENTS (10)
-#define DATASET_NUM_ZERO (0)
-#define DATASET_NUM_ONE (1)
-#define SPEED_MODE (0)
-#define SEND_INTERVAL (10)
+
+#define DATASET_LEN_V01 (30)
+#define DATASET_LEN_V02 (31) // Provision for future release.
 
 #define ACC_CONST (0.000122)
 #define GYR_CONST (0.004375)
@@ -146,7 +145,7 @@ int main(int argc, char **argv)
 
 	tf::TransformBroadcaster odom_broadcaster_;
 
-    ros::NodeHandle nh_("~");  // For parameters
+        ros::NodeHandle nh_("~");  // For parameters
 	double wheel_radius = 0.135;
 	nh_.getParam("wheel_radius", wheel_radius);
 
@@ -163,14 +162,12 @@ int main(int argc, char **argv)
 	}
 	ROS_INFO("param: send_interval=%d", send_interval);
 
-
-
 	// WHILL setup
 	struct epoll_event ev;
 	struct epoll_event events[MAX_EVENTS];
 	int epollfd, nfds;
 	int whill_fd; // file descriptor for UART to communicate with WHILL
-	char recv_buf[128];
+	unsigned char recv_buf[128];
 	int len, idx;
 	int i;
 
@@ -184,14 +181,27 @@ int main(int argc, char **argv)
 	// register Fd to epoll
 	registerFdToEpoll(&ev, epollfd, whill_fd);
 
+	// Power On WHILL
+	sendPowerOn(whill_fd);
+	usleep(2000);
+
 	// Send StartSendingData command: dataset 0 for all speed mode
-	for(int i = 0; i < 6; i ++)
-	{
+	i = 0;
+	while(i < 6)
+	{		
 		sendStopSendingData(whill_fd);
 		usleep(2000);
+		do
+		{ //flush old buffer
+			len = recvDataWHILL(whill_fd, recv_buf);
+		} while (len > 0);
 		sendStartSendingData(whill_fd, 25, DATASET_NUM_ZERO, i);
 		usleep(2000);
-		len = recvDataWHILL(whill_fd, recv_buf);
+		do
+		{
+			len = recvDataWHILL(whill_fd, recv_buf);
+		} while (len == 0);
+		
 		if(recv_buf[0] == DATASET_NUM_ZERO && len == 12)
 		{
 			ros_whill::msgWhillSpeedProfile msg_sp;
@@ -207,9 +217,9 @@ int main(int argc, char **argv)
 			msg_sp.td1 = int(recv_buf[10] & 0xff);
 			whill_speed_profile_pub.publish(msg_sp);
 			ROS_INFO("Speed profile %ld is published", msg_sp.s1);
+			i++;
 		}
 	}
-
 
 	// send StopSendingData command
 	sendStopSendingData(whill_fd);
@@ -243,25 +253,17 @@ int main(int argc, char **argv)
 			// Receive Data From WHILL
 			if(events[i].data.fd == whill_fd) {
 				len = recvDataWHILL(whill_fd, recv_buf);
-				if(recv_buf[0] == DATASET_NUM_ONE && len == 31)
+				ROS_DEBUG("recv_buf[0] = 0x%x, len = %d", recv_buf[0], len);
+				if(recv_buf[0] == POWERON_RESPONSE_DATA && len == 2)
 				{
-					unsigned char checksum = 0x00;
-					for(int i = 0; i<=29; i++){
-						checksum ^= static_cast<unsigned char>(recv_buf[i]);
-					}
-					unsigned char cs = static_cast<unsigned char>(recv_buf[30]);
-
-					//printf("%d %d",recv_buf[30],cs);
-					//if(checksum != cs){
-					//	ROS_WARN("Checksum Failed 0x%02x:0x%02x",checksum,cs-checksum);
-					//	continue;
-					//}
-
-
+					ROS_INFO("WHILL: Successfully powered on.");
+				}
+				else if(recv_buf[0] == DATASET_NUM_ONE && (len == DATASET_LEN_V01 || len == DATASET_LEN_V02))
+				{
 					ros::Time currentTime = ros::Time::now();
 					joy.header.stamp = currentTime;
-					jointState.header.stamp = ros::Time::now();
-					imu.header.stamp = ros::Time::now();
+					jointState.header.stamp = currentTime;
+					imu.header.stamp = currentTime;
 
 					msg.acc_x = calc_16bit_signed_data(recv_buf[1], recv_buf[2]) * ACC_CONST;
 					msg.acc_y = calc_16bit_signed_data(recv_buf[3], recv_buf[4]) * ACC_CONST;
@@ -287,10 +289,23 @@ int main(int argc, char **argv)
 					msg.speed_mode_indicator = int(recv_buf[27] & 0xff);
 
 					
-					unsigned int time_ms = (unsigned int)(recv_buf[29] & 0xff);
+					unsigned int time_diff_ms = 0;
+					unsigned int time_ms = 0;
 					static unsigned int past_time_ms = 0;
-					unsigned int time_diff_ms = calc_time_diff(past_time_ms,time_ms);
-					past_time_ms = time_ms;
+                    static ros::Time pastTime = ros::Time(0);
+					if(len == DATASET_LEN_V02)
+					{
+						time_ms = static_cast<unsigned int>(recv_buf[29] & 0xff);
+					    time_diff_ms = calc_time_diff(past_time_ms,time_ms);
+                        past_time_ms = time_ms;
+                        ROS_DEBUG("New style time count (Experimental). Interval=%d", time_diff_ms);
+					}
+					else
+					{
+					    time_diff_ms = static_cast<unsigned int>((currentTime - pastTime).toSec() * 1000);
+                        pastTime = currentTime;
+                        ROS_DEBUG("Conventional style time count. Interval=%d", time_diff_ms);
+					}
 
 
 					// IMU message
@@ -309,8 +324,9 @@ int main(int argc, char **argv)
 					// Battery State
 
 					batteryState.voltage                 = 25.2; //[V]
-					batteryState.current                 = -msg.battery_current / 1000.0f; // mA -> A
+					batteryState.current                 = msg.battery_current / 1000.0f; // mA -> A
 					batteryState.charge                  = std::numeric_limits<float>::quiet_NaN();
+                    batteryState.capacity                = std::numeric_limits<float>::quiet_NaN();
 					batteryState.design_capacity         = 10.04;//[Ah]
 					batteryState.percentage              = msg.battery_power / 100.0f; // Percentage
 					batteryState.power_supply_status     = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
