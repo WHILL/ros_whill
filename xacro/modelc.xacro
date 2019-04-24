@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<robot name="whill_simulator" >
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="whill_modelc" >
 
     <link name="base_footprint">
 
@@ -75,44 +75,6 @@
         <child link="footrest_link" />
         <origin xyz="0.320 0 0" rpy="0 0 0"/>
     </joint>
-
-
-
-    <link name="sensor_arm_link">
-
-        <collision>
-            <origin xyz="0 0 0.225" rpy="0 0 0" />
-            <geometry>
-                <box size="0.05 0.05 0.45"/>
-            </geometry>
-        </collision>   
-
-        <visual>
-            <origin xyz="0 0 0.225" rpy="0 0 0" />
-            <geometry>
-                <box size="0.05 0.05 0.45"/>
-            </geometry>
-            <material name="grey">
-                <color rgba="0.5 0.5 0.5 1.0"/>
-            </material>
-        </visual>
-        
-        <inertial>
-            <origin xyz="0 0 0" rpy="0 0 0" />
-            <mass value="0.5" />
-            <inertia ixx="1.0"  ixy="0.0"   ixz="0.0"
-                                iyy="1.0"   iyz="0.0"
-                                            izz="1.0" />
-        </inertial>
-    </link>
-
-    <joint name="sensor_arm_joint" type="fixed">
-        <axis xyz="0 1 0" />
-        <origin xyz="0.20 0 0.025" rpy="0 0 0"/>
-        <parent link="base_floor"/>
-        <child link="sensor_arm_link"/>
-    </joint>
-
 
     <link name="left_wheel_link">
         <visual>
@@ -237,41 +199,6 @@
         <axis xyz="0 0 -1" />
     </joint>
 
-
-    <!-- Hokuyo Laser -->
-    <link name="hokuyo_link">
-        <collision>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <box size="0.1 0.1 0.1"/>
-            </geometry>
-        </collision>     <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <mesh filename="package://rrbot_description/meshes/hokuyo.dae"/>
-            </geometry>
-
-        <visual>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <mesh filename="package://rrbot_description/meshes/hokuyo.dae"/>
-            </geometry>
-        </visual>
-
-        <inertial>
-            <mass value="1e-5" />
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
-        </inertial>
-    </link>
-
-
-    <joint name="hokuyo_joint" type="fixed">
-        <axis xyz="0 1 0" />
-        <origin xyz="0.0 0 0.5" rpy="0 0 0"/>
-        <parent link="sensor_arm_link"/>
-        <child link="hokuyo_link"/>
-    </joint>
-
     <!-- IMU -->
     <link name="imu">
     </link>
@@ -352,44 +279,6 @@
         <mu1 value="0.0" />
         <mu2 value="0.0" />
     </gazebo>
-
-    <!-- hokuyo -->
-    <gazebo reference="hokuyo_link">
-        <sensor type="ray" name="head_hokuyo_sensor">
-            <pose>0 0 0 0 0 0</pose>
-            <visualize>true</visualize>
-            <update_rate>60</update_rate>
-            <ray>
-                <scan>
-                <horizontal>
-                    <samples>720</samples>
-                    <resolution>1</resolution>
-                    <min_angle>-1.744</min_angle>
-                    <max_angle>1.744</max_angle>
-                </horizontal>
-                </scan>
-                <range>
-                    <min>0.10</min>
-                    <max>30.0</max>
-                    <resolution>0.01</resolution>
-                </range>
-                <noise>
-                    <type>gaussian</type>
-                    <!-- Noise parameters based on published spec for Hokuyo laser
-                        achieving "+-30mm" accuracy at range < 10m.  A mean of 0.0m and
-                        stddev of 0.01m will put 99.7% of samples within 0.03m of the true
-                        reading. -->
-                    <mean>0.0</mean>
-                    <stddev>0.01</stddev>
-                </noise>
-            </ray>
-            <plugin name="laser" filename="libgazebo_ros_laser.so">
-                <topicName>/laser/scan</topicName>
-                <frameName>hokuyo_link</frameName>
-            </plugin>
-        </sensor>
-    </gazebo>
-
 
 </robot>
 
