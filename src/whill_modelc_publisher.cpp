@@ -385,13 +385,13 @@ int main(int argc, char **argv)
                     geometry_msgs::TransformStamped odom_trans = odom.getROSTransformStamped();
                     odom_trans.header.stamp = currentTime;
                     odom_trans.header.frame_id = "odom";
-                    odom_trans.child_frame_id = "base_footprint";
+                    odom_trans.child_frame_id = "base_link";
                     odom_broadcaster_.sendTransform(odom_trans);
 
                     nav_msgs::Odometry odom_msg = odom.getROSOdometry();
                     odom_msg.header.stamp = currentTime;
                     odom_msg.header.frame_id = "odom";
-                    odom_msg.child_frame_id = "base_footprint";
+                    odom_msg.child_frame_id = "base_link";
                     whill_modelc_odom.publish(odom_msg);
                 }
             }

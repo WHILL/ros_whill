@@ -46,6 +46,8 @@ SOFTWARE.
 #include <limits>
 
 
+const float base_link_height = 0.1325;
+
 
 Odometry::Odometry(){
     pose.x = pose.y = pose.theta = 0.0;
@@ -114,7 +116,7 @@ nav_msgs::Odometry Odometry::getROSOdometry(){
     // position
     odom.pose.pose.position.x = pose.x;
     odom.pose.pose.position.y = pose.y;
-    odom.pose.pose.position.z = 0.0;
+    odom.pose.pose.position.z = base_link_height;
     odom.pose.pose.orientation = odom_quat;
 
     //velocity
@@ -138,7 +140,7 @@ geometry_msgs::TransformStamped Odometry::getROSTransformStamped(){
 
     odom_trans.transform.translation.x = pose.x;
     odom_trans.transform.translation.y = pose.y;
-    odom_trans.transform.translation.z = 0.0;
+    odom_trans.transform.translation.z = base_link_height;
     odom_trans.transform.rotation = tf::createQuaternionMsgFromYaw(pose.theta);
 
     return  odom_trans;
