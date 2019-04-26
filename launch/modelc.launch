@@ -2,7 +2,7 @@
     <arg name="model" default="$(find ros_whill)/xacro/modelc.xacro" />
     <arg name="gui" default="true" />
 
-    <param name="robot_description" command="$(find xacro)/xacro $(find ros_whill)/xacro/modelc.xacro"/>
+    <param name="robot_description" command="$(find xacro)/xacro $(arg model)"/>
   
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
         <remap from="/joint_states" to="/whill/states/jointState" />
