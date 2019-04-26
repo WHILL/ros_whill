@@ -25,7 +25,8 @@ THE SOFTWARE.
 #ifndef __WHILL_H__
 #define __WHILL_H__
 
-#include <stdio.h>
+#include <stdint.h>
+#include <vector>
 
 
 class WHILL{
@@ -102,8 +103,8 @@ class WHILL{
 private:
 
     // Custom transceiver
-    int (*read)(unsigned char *byte);
-    int (*write)(unsigned char bytes[],int length);
+    int (*read)(std::vector<uint8_t> &data);    // Returns how many bytes read actually
+    int (*write)(std::vector<uint8_t> &data);   // Returns how many bytes wrote actually
 
     void receivePacket();
     void transferPacket(Packet* packet);
@@ -113,7 +114,7 @@ private:
 
 
 public:
-  WHILL(int (*read)(unsigned char *byte), int (*write)(unsigned char bytes[], int length));
+  WHILL(int (*read)(std::vector<uint8_t> &data), int (*write)(std::vector<uint8_t> &data));
   void begin(unsigned int interval);
 
   //Callback

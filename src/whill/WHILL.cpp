@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 #include "WHILL.h"
 
-WHILL::WHILL(int (*read)(unsigned char *byte), int (*write)(unsigned char bytes[],int length))
+WHILL::WHILL(int (*read)(std::vector<uint8_t> &data), int (*write)(std::vector<uint8_t> &data))
 {
     this->read = read;
     this->write = write;
@@ -59,14 +59,20 @@ void WHILL::begin(unsigned int interval){
 void WHILL::transferPacket(Packet* packet){
     unsigned char buffer[Packet::MAX_LENGTH] = {0};
     int size = packet->getRaw(buffer);
-    write(buffer,size);
+    std::vector<uint8_t>data(buffer, buffer + size * sizeof(buffer[0]));
+    write(data);
 }
 
 void WHILL::receivePacket(){
-    unsigned char data;
-    while(read(&data) != -1){
-        receiver.push(data);
+    std::vector<uint8_t> data;
+
+    if(read(data) > 0){
+        size_t size = data.size();
+        for (size_t i = 0; i < size;i++){
+            receiver.push(data[i]);
+        }
     }
+
 }
 
 // void WHILL::keep_joy_delay(unsigned long ms){

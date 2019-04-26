@@ -24,6 +24,7 @@ SOFTWARE.
 
 #include <string.h>
 #include <stdint.h>
+#include <vector>
 
 #include "ros/ros.h"
 #include "sensor_msgs/Joy.h"
@@ -32,13 +33,61 @@ SOFTWARE.
 #include "sensor_msgs/BatteryState.h"
 #include "nav_msgs/Odometry.h"
 
-#include "whill/WHILL.h"
+#include "whill/WHILL.h"   
+#include "serial/serial.h"  // wwjwood/Serial (ros-melodic-serial)
 
 // #include "./includes/subscriber.hpp"
 // #include "./includes/services.hpp"
 
-#include "serial/serial.h"
 
+
+//
+//  UART Interface
+//
+serial::Serial *ser = NULL;
+
+int serialRead(std::vector<uint8_t> &data)
+{
+    if (ser)
+    {
+        return ser->read(data, 30); // How many bytes read in one time.
+    }
+    return 0;
+}
+
+int serialWrite(std::vector<uint8_t> &data)
+{
+    if (ser)
+    {
+        return ser->write(data);
+    }
+    return 0;
+}
+
+
+//
+// WHILL
+//
+WHILL *whill = NULL;
+
+void callback_data1(WHILL *caller)
+{
+    // This function is called when receive Joy/Accelerometer/Gyro,etc.
+    ROS_INFO("Updated");
+    ROS_INFO("%d",caller->joy.x);
+    ROS_INFO("%d",caller->joy.y);
+}
+
+void callback_powered_on(WHILL *caller)
+{
+    // This function is called when powered on via setPower()
+    ROS_INFO("power_on");
+}
+
+
+//
+// Main
+//
 int main(int argc, char **argv)
 {
     // ROS setup
@@ -62,11 +111,21 @@ int main(int argc, char **argv)
     }
     ROS_INFO("param: send_interval=%d", send_interval);
 
+    std::string port = "/dev/ttyUSB0";
+    unsigned long baud = 38400;
+
+    ser = new serial::Serial(port, baud, serial::Timeout::simpleTimeout(0));
+
+    whill = new WHILL(serialRead, serialWrite);
+    whill->register_callback(callback_data1, WHILL::EVENT::CALLBACK_DATA1);
+    whill->register_callback(callback_powered_on, WHILL::EVENT::CALLBACK_POWER_ON);
+    whill->begin(10);
+
     // // Services
     // ros::ServiceServer set_power_service_service = nh.advertiseService("power/on", set_power_service_callback);
     // //ros::ServiceServer service             = nh.advertiseService("odom/clear", &clearOdom);
 
-    // // Subscribers
+    // // SubscriberstransferPacket
     // ros::Subscriber control_joystick_subscriber = nh.subscribe("controller/joy", 100, control_joystick_callback); // Defined in subscriber.cpp
 
     // // Publishers
@@ -86,28 +145,14 @@ int main(int argc, char **argv)
         // Publishers
     }
 
-    usleep(100);
-
-    std::string port = "/dev/ttyUSB0";
-    unsigned long baud = 38400;
-    serial::Serial my_serial(port, baud, serial::Timeout::simpleTimeout(100));
-
     ros::AsyncSpinner spinner(1);
     spinner.start();
-    ros::Rate rate(1);
-
-    //
-    // //      cmd[0] = START;
-    // cmd[1] = data_set_num;
-    // cmd[2] = (char)(t >> 8);
-    // cmd[3] = (char)t;
-    // cmd[4] = speed_mode; // added on Model C
-                         ///
-    //sendStartSendingData(my_serial, send_interval, DATASET_NUM_ONE, SPEED_MODE);
-    usleep(2000);
+    ros::Rate rate(10);
 
     while (ros::ok())
     {
+        //whill->refresh();
+        whill->setJoystick(50, 0);
         // std::vector<uint8_t> received;
         // //size_t length = my_serial.read(received,20);
         // std::cout << length << ", String read: " << std::endl;
@@ -116,7 +161,9 @@ int main(int argc, char **argv)
         //     printf("%02x,", (unsigned int)*i);
         // }
         //ROS_INFO("sleep()");
+
         rate.sleep();
+
     }
 
     spinner.stop();
