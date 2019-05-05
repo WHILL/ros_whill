@@ -33,7 +33,7 @@ SOFTWARE.
 #include "sensor_msgs/BatteryState.h"
 #include "nav_msgs/Odometry.h"
 
-#include "whill/WHILL.h"   
+#include "libwhill/WHILL.h"   
 #include "serial/serial.h"  // wwjwood/Serial (ros-melodic-serial)
 
 // #include "./includes/subscriber.hpp"

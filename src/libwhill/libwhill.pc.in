@@ -1,0 +1,10 @@
+libdir=@CONF_LIBRARY_DIR@
+includedir=@CONF_INCLUDE_DIR@
+libraries=@CONF_LIBRARIES@
+
+Name: @PROJECT_NAME@
+Description: @libwhill_DESCRIPTION@
+URL: @libwhill_URL@
+Version: @libwhill_VERSION@
+Libs: -L${libdir} -l${libraries}
+Cflags: -I${includedir}
