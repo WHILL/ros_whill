@@ -22,9 +22,6 @@ set(${PROJECT_NAME}_VERSION ${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_V
 set(${PROJECT_NAME}_DESCRIPTION "A cross-platform library for WHILL Model CR")
 set(${PROJECT_NAME}_URL "https://github.com/WHILL/ros_whill")
 
-# Try to find serial communication library https://github.com/wjwwood/serial
-find_package(serial REQUIRED)
-
 set(SOURCES 
     src/Packet.cpp 
     src/PacketParser.cpp 
