@@ -39,8 +39,6 @@ SOFTWARE.
 // #include "./includes/subscriber.hpp"
 // #include "./includes/services.hpp"
 
-
-
 //
 //  UART Interface
 //
@@ -48,7 +46,7 @@ serial::Serial *ser = NULL;
 
 int serialRead(std::vector<uint8_t> &data)
 {
-    if (ser)
+    if (ser && ser->isOpen())
     {
         return ser->read(data, 30); // How many bytes read in one time.
     }
@@ -57,7 +55,7 @@ int serialRead(std::vector<uint8_t> &data)
 
 int serialWrite(std::vector<uint8_t> &data)
 {
-    if (ser)
+    if (ser && ser->isOpen())
     {
         return ser->write(data);
     }
@@ -111,10 +109,13 @@ int main(int argc, char **argv)
     }
     ROS_INFO("param: send_interval=%d", send_interval);
 
-    std::string port = "/dev/ttyUSB0";
+    std::string port = "/dev/tty.whill";
     unsigned long baud = 38400;
 
-    ser = new serial::Serial(port, baud, serial::Timeout::simpleTimeout(0));
+    serial::Timeout timeout = serial::Timeout::simpleTimeout(0);
+    timeout.write_timeout_multiplier = 5;
+
+    ser = new serial::Serial(port, baud, timeout);
 
     whill = new WHILL(serialRead, serialWrite);
     whill->register_callback(callback_data1, WHILL::EVENT::CALLBACK_DATA1);
@@ -147,23 +148,14 @@ int main(int argc, char **argv)
 
     ros::AsyncSpinner spinner(1);
     spinner.start();
-    ros::Rate rate(10);
+    ros::Rate rate(100);
 
     while (ros::ok())
     {
-        //whill->refresh();
+        whill->refresh();
         whill->setJoystick(50, 0);
-        // std::vector<uint8_t> received;
-        // //size_t length = my_serial.read(received,20);
-        // std::cout << length << ", String read: " << std::endl;
-        // for (std::vector<uint8_t>::iterator i = begin(received); i != end(received); ++i)
-        // {
-        //     printf("%02x,", (unsigned int)*i);
-        // }
-        //ROS_INFO("sleep()");
 
         rate.sleep();
-
     }
 
     spinner.stop();
