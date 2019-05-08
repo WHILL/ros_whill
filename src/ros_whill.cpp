@@ -34,15 +34,62 @@ SOFTWARE.
 #include "nav_msgs/Odometry.h"
 
 #include "whill/WHILL.h"   
-#include "serial/serial.h"  // wwjwood/Serial (ros-melodic-serial)
+#include "serial/serial.h"  // wjwood/Serial (ros-melodic-serial)
 
 // #include "./includes/subscriber.hpp"
 // #include "./includes/services.hpp"
 
+WHILL *whill = nullptr;
+
+//
+// ROS Objects
+//
+
+// Publishers
+ros::Publisher joystick_state_publisher;
+ros::Publisher jointstate_publisher;
+ros::Publisher imu_publisher;
+ros::Publisher battery_state_publisher;
+ros::Publisher odom_publisher;
+
+
+// 
+// ROS Callbacks
+//
+void ros_joystick_callback(const sensor_msgs::Joy::ConstPtr &joy)
+{
+    // Transform [-1.0,1.0] to [-100,100]
+    int joy_x = -joy->axes[0] * 100.0f;
+    int joy_y = joy->axes[1] * 100.0f;
+
+    // value check
+    if (joy_y < -100)
+        joy_y = -100;
+    if (joy_y > 100)
+        joy_y = 100;
+    if (joy_x < -100)
+        joy_x = -100;
+    if (joy_x > 100)
+        joy_x = 100;
+
+    if (whill)
+    {
+        whill->setJoystick(joy_x, joy_y);
+    }
+}
+
+void ros_cmd_vel_callback(const geometry_msgs::Twist::ConstPtr &cmd_vel)
+{
+    if (whill)
+    {
+        whill->setSpeed(cmd_vel->linear.x, cmd_vel->angular.z);
+    }
+}
+
 //
 //  UART Interface
 //
-serial::Serial *ser = NULL;
+serial::Serial *ser = nullptr;
 
 int serialRead(std::vector<uint8_t> &data)
 {
@@ -62,13 +109,10 @@ int serialWrite(std::vector<uint8_t> &data)
     return 0;
 }
 
-
 //
 // WHILL
 //
-WHILL *whill = NULL;
-
-void callback_data1(WHILL *caller)
+void whill_callback_data1(WHILL *caller)
 {
     // This function is called when receive Joy/Accelerometer/Gyro,etc.
     ROS_INFO("Updated");
@@ -77,7 +121,7 @@ void callback_data1(WHILL *caller)
     ROS_INFO("interval:%d",caller->_interval);
 }
 
-void callback_powered_on(WHILL *caller)
+void whill_callback_powered_on(WHILL *caller)
 {
     // This function is called when powered on via setPower()
     ROS_INFO("power_on");
@@ -98,6 +142,33 @@ int main(int argc, char **argv)
 
     bool activate_experimental;
     nh.param<bool>("activate_experimental", activate_experimental, false);
+
+    // Services
+    //set_power_service_service = nh.advertiseService("power/on", set_power_service_callback);
+    //clear_odom_service        = nh.advertiseService("odom/clear", &clearOdom);
+
+    // Subscriber
+    ros::Subscriber joystick_subscriber = nh.subscribe("controller/joy", 100, ros_joystick_callback);
+    ros::Subscriber twist_subscriber = nh.subscribe("controller/cmd_vel", 100, ros_cmd_vel_callback);
+
+    // // Publishers
+    joystick_state_publisher = nh.advertise<sensor_msgs::Joy>("states/joy", 100);
+    jointstate_publisher = nh.advertise<sensor_msgs::JointState>("states/jointState", 100);
+    imu_publisher = nh.advertise<sensor_msgs::Imu>("states/imu", 100);
+    battery_state_publisher = nh.advertise<sensor_msgs::BatteryState>("states/batteryState", 100);
+    odom_publisher = nh.advertise<nav_msgs::Odometry>("odom", 100);
+ 
+    if (activate_experimental)
+    {
+        //Services
+
+        //Subscribers
+        ros::Subscriber control_cmd_vel_subscriber = nh.subscribe("controller/cmd_vel", 100, ros_cmd_vel_callback);
+
+        // Publishers
+    }
+
+
 
     // Node Param
     int send_interval = 10;
@@ -120,33 +191,11 @@ int main(int argc, char **argv)
     ser->flush();
 
     whill = new WHILL(serialRead, serialWrite);
-    whill->register_callback(callback_data1, WHILL::EVENT::CALLBACK_DATA1);
-    whill->register_callback(callback_powered_on, WHILL::EVENT::CALLBACK_POWER_ON);
+    whill->register_callback(whill_callback_data1, WHILL::EVENT::CALLBACK_DATA1);
+    whill->register_callback(whill_callback_powered_on, WHILL::EVENT::CALLBACK_POWER_ON);
     whill->begin(10); // ms
 
-    // // Services
-    // ros::ServiceServer set_power_service_service = nh.advertiseService("power/on", set_power_service_callback);
-    // //ros::ServiceServer service             = nh.advertiseService("odom/clear", &clearOdom);
 
-    // // SubscriberstransferPacket
-    // ros::Subscriber control_joystick_subscriber = nh.subscribe("controller/joy", 100, control_joystick_callback); // Defined in subscriber.cpp
-
-    // // Publishers
-    // ros::Publisher joystick_state_publisher = nh.advertise<sensor_msgs::Joy>("states/joy", 100);
-    // ros::Publisher jointstate_publisher = nh.advertise<sensor_msgs::JointState>("states/jointState", 100);
-    // ros::Publisher imu_publisher = nh.advertise<sensor_msgs::Imu>("states/imu", 100);
-    // ros::Publisher battery_state_publisher = nh.advertise<sensor_msgs::BatteryState>("states/batteryState", 100);
-    // ros::Publisher odom_publisher = nh.advertise<nav_msgs::Odometry>("odom", 100);
-
-    if (activate_experimental)
-    {
-        //Services
-
-        //Subscribers
-        //ros::Subscriber control_cmd_vel_subscriber = nh.subscribe("controller/cmd_vel", 100, control_cmd_vel_callback);
-
-        // Publishers
-    }
 
     ros::AsyncSpinner spinner(1);
     spinner.start();
@@ -155,7 +204,7 @@ int main(int argc, char **argv)
     while (ros::ok())
     {
         whill->refresh();
-        whill->setSpeed(0.0f,0.5f);
+        //whill->setSpeed(0.0f,0.5f);
         rate.sleep();
     }
 
