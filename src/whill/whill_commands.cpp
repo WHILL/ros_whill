@@ -117,17 +117,21 @@ void WHILL::setSpeed(float linear,  float angular)
     {
         //forward
         y = desire_front_kmh / front_max * 100;
+        y = y > 100 ? 100 : y;
     }
     else
     {
         //back
         y = desire_front_kmh / back_max * 100;
+        y = y < -100 ? -100 : y;
     }
 
     x = desire_spin_spd / spin_max * 100;
+    x = x > 100 ? 100 : x;
+    x = x < -100 ? -100 : x;
 
-    unsigned char payload[] = {0x08, // Experimental Command, Control without Jerk
-                               0x00, // Beta,  SET_ACCEL_JOY = 0x08
+    unsigned char payload[] = {0x08, // Experimental Command, Control with Low Jerk, Almost Const-Accel control
+                               0x00, 
                                (unsigned char)(char)(y),
                                (unsigned char)(char)(x)};
     Packet packet(payload, sizeof(payload));
