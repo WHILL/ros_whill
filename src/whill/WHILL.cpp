@@ -24,35 +24,19 @@ THE SOFTWARE.
 
 #include "WHILL.h"
 
+#include <cmath>
+
 WHILL::WHILL(int (*read)(std::vector<uint8_t> &data), int (*write)(std::vector<uint8_t> &data))
 {
-    this->read = read;
-    this->write = write;
+    this->read = read;   // Register UART read interface pointer
+    this->write = write; // Register UART write interface pointer
 
     parser.setParent(this);
     receiver.register_callback(&parser,&PacketParser::parsePacket);
 }
 
-
-// int WHILL::read(unsigned char* byte){    // Implementation of read interaface to WHILL
-//     if(serial == NULL) return -1;
-
-//     int data = serial->read();
-//     if(data == -1) return -1;  //Nothing read
-
-//     *byte = data;
-
-//     return 1;
-// }
-
-// int WHILL::write(unsigned char byte){   // Implementation of write interface to WHILL
-//     if(serial == NULL) return -1;
-//     serial->write(byte);
-
-//     return 1;
-// }
-
-void WHILL::begin(unsigned int interval){
+void WHILL::begin(unsigned int interval)
+{
     this->startSendingData1(interval);
 }
 
@@ -65,7 +49,7 @@ void WHILL::transferPacket(Packet* packet){
 
 void WHILL::receivePacket(){
     std::vector<uint8_t> data;
-
+    
     if(read(data) > 0){
         size_t size = data.size();
         for (size_t i = 0; i < size;i++){
@@ -74,27 +58,6 @@ void WHILL::receivePacket(){
     }
 
 }
-
-// void WHILL::keep_joy_delay(unsigned long ms){
-//     while(ms > 0){
-//         refresh();
-//         if(ms%100 == 0){
-//             this->setJoystick(virtual_joy.x,virtual_joy.y);
-//         }
-//         ms--;
-//         ::delay(1);
-//     }  
-// }
-
-
-// void WHILL::delay(unsigned long ms){
-//     while(ms > 0){
-//         refresh();
-//         ms--;
-//         ::delay(1);
-//     }
-// }
-
 
 void WHILL::refresh(){
     // Scan the data from interface
@@ -109,4 +72,16 @@ void WHILL::register_callback(Callback method,EVENT event){
 void WHILL::fire_callback(EVENT event){
     if(callback_functions[event]==NULL)return;
     callback_functions[event](this);
+}
+
+// Experimental
+uint8_t WHILL::calc_time_diff(uint8_t past, uint8_t current)
+{
+    // Counts up 0 to 201. If counter exceeds 201, goes to 0.
+    int diff = current - past;
+    if (abs(diff) >= 100) // Half
+    {
+        diff = (201 - past) + current;
+    }
+    return (uint8_t)diff;
 }

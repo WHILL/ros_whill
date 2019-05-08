@@ -74,6 +74,7 @@ void callback_data1(WHILL *caller)
     ROS_INFO("Updated");
     ROS_INFO("%d",caller->joy.x);
     ROS_INFO("%d",caller->joy.y);
+    ROS_INFO("interval:%d",caller->_interval);
 }
 
 void callback_powered_on(WHILL *caller)
@@ -104,7 +105,7 @@ int main(int argc, char **argv)
     if (send_interval < 10)
     {
         ROS_WARN("Too short interval. Set interval > 10");
-        nh.setParam("/whill_modelc_publisher/send_interval", 10);
+        nh.setParam("send_interval", 10);
         send_interval = 10;
     }
     ROS_INFO("param: send_interval=%d", send_interval);
@@ -116,11 +117,12 @@ int main(int argc, char **argv)
     timeout.write_timeout_multiplier = 5;
 
     ser = new serial::Serial(port, baud, timeout);
+    ser->flush();
 
     whill = new WHILL(serialRead, serialWrite);
     whill->register_callback(callback_data1, WHILL::EVENT::CALLBACK_DATA1);
     whill->register_callback(callback_powered_on, WHILL::EVENT::CALLBACK_POWER_ON);
-    whill->begin(10);
+    whill->begin(10); // ms
 
     // // Services
     // ros::ServiceServer set_power_service_service = nh.advertiseService("power/on", set_power_service_callback);
@@ -153,8 +155,7 @@ int main(int argc, char **argv)
     while (ros::ok())
     {
         whill->refresh();
-        whill->setJoystick(50, 0);
-
+        whill->setSpeed(0.0f,0.5f);
         rate.sleep();
     }
 

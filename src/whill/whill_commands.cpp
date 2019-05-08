@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2018 WHILL,
+Copyright (c) 2018-2019 WHILL,
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -96,6 +96,41 @@ void WHILL::setBatteryVoltaegeOut(bool enable){
      unsigned char payload[] = {0x05,
                                 (unsigned char)(enable ? 0x01 : 0x00)};
     Packet packet(payload,sizeof(payload));
+    packet.build();
+    transferPacket(&packet);
+}
+
+// Experimental, Speed control without Jerk control but only Acceleration cotnrol.
+void WHILL::setSpeed(float linear,  float angular)
+{
+    int x, y;
+
+    const float front_max = 6.0;     // [km/h]
+    const float spin_max = 3.5;      // [km/h]
+    const float back_max = 2.0;      // [km/h]
+    const float tread_width = 0.248; // [m]
+
+    float desire_front_kmh = linear * 3.6;                    // [m/s]   to [km/h]
+    float desire_spin_spd = -tread_width * angular * 3.6 * 2; // [rad/s] to [km/h]
+
+    if (linear >= 0)
+    {
+        //forward
+        y = desire_front_kmh / front_max * 100;
+    }
+    else
+    {
+        //back
+        y = desire_front_kmh / back_max * 100;
+    }
+
+    x = desire_spin_spd / spin_max * 100;
+
+    unsigned char payload[] = {0x08, // Experimental Command, Control without Jerk
+                               0x00, // Beta,  SET_ACCEL_JOY = 0x08
+                               (unsigned char)(char)(y),
+                               (unsigned char)(char)(x)};
+    Packet packet(payload, sizeof(payload));
     packet.build();
     transferPacket(&packet);
 }

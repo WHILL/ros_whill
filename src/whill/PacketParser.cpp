@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+#include "stdio.h"
 
 #include "WHILL.h"
 
@@ -75,15 +76,28 @@ void WHILL::PacketParser::parseDataset1(Packet* packet){
 
   whill->battery.level   = (unsigned char)packet->payload[15];
   whill->battery.current = (signed short)((packet->payload[16] << 8)+(packet->payload[17])) * 2; //Unit : 2mA
-  
-  whill->right_motor.angle = (float)((signed short)((packet->payload[18] << 8)+(packet->payload[19])) * 0.001 );
-  whill->left_motor.angle  = (float)((signed short)((packet->payload[20] << 8)+(packet->payload[21])) * 0.001 );
+
+  whill->right_motor.angle = (float)((signed short)((packet->payload[18] << 8) + (packet->payload[19])) * 0.001);
+  whill->left_motor.angle = (float)((signed short)((packet->payload[20] << 8) + (packet->payload[21])) * 0.001);
 
   whill->right_motor.speed = (signed short)((packet->payload[22] << 8)+(packet->payload[23])) * 4;
   whill->left_motor.speed  = (signed short)((packet->payload[24] << 8)+(packet->payload[25])) * 4;
 
   whill->power                = packet->payload[26] == 0x00 ? false : true;
   whill->speed_mode_indicator = packet->payload[27];
+
+  // Experimental, Set interval comming from Motor Controller
+  if (packet->rawLength() == WHILL::Packet::DATASET1_LEN_V02){
+    whill->_interval = 1;
+    uint8_t time_ms = packet->payload[29];
+    whill->_interval = WHILL::calc_time_diff(whill->past_time_ms,time_ms);
+    whill->past_time_ms = time_ms;
+  }
+  else
+  {
+    whill->past_time_ms = 0;
+    whill->_interval = -1;
+  }
 
   if(whill == NULL)return;
   whill->fire_callback(CALLBACK_DATA1);
