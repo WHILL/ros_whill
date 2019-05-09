@@ -54,12 +54,13 @@ add_subdirectory(./src/whill)
 ## Generate messages in the 'msg' folder
  add_message_files(
    FILES
- )
+   SpeedPack.msg
+  )
 
 ## Generate services in the 'srv' folder
  add_service_files(
    FILES
-   srvSetSpeedProfile.srv
+   SetSpeedProfile.srv
  )
 
 ## Generate actions in the 'action' folder
@@ -73,6 +74,7 @@ add_subdirectory(./src/whill)
  generate_messages(
    DEPENDENCIES
    std_msgs
+   ros_whill
  )
 
 ################################################
