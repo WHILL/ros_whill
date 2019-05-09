@@ -10,7 +10,7 @@
 
     <arg name="serialport" default="$(env TTY_WHILL)"/>
 
-    <node pkg="ros_whill" type="ros_whill" name="ros_whill" output="screen" >
+    <node pkg="ros_whill" type="ros_whill" name="whill" output="screen" >
         <param name="serialport" value="$(arg serialport)"/>
     </node>
 </launch>
