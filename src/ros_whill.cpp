@@ -259,37 +259,31 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "whill");
     ros::NodeHandle nh("~");
 
-    std::string serialport;
-    nh.param<std::string>("serialport", serialport, "/dev/ttyUSB0");
-
-    bool activate_experimental_topics;
-    nh.param<bool>("activate_experimental_topics", activate_experimental_topics, false);
 
     // Services
     //set_power_service_service = nh.advertiseService("power/on", set_power_service_callback);
     ros::ServiceServer clear_odom_service        = nh.advertiseService("odom/clear", &ros_srv_odom_clear_callback);
 
+
     // Subscriber
     ros::Subscriber joystick_subscriber = nh.subscribe("controller/joy", 100, ros_joystick_callback);
     ros::Subscriber twist_subscriber = nh.subscribe("controller/cmd_vel", 100, ros_cmd_vel_callback);
 
-    // // Publishers
+
+    // Publishers
     ros_joystick_state_publisher = nh.advertise<sensor_msgs::Joy>("states/joy", 100);
     ros_jointstate_publisher = nh.advertise<sensor_msgs::JointState>("states/jointState", 100);
     ros_imu_publisher = nh.advertise<sensor_msgs::Imu>("states/imu", 100);
     ros_battery_state_publisher = nh.advertise<sensor_msgs::BatteryState>("states/batteryState", 100);
     ros_odom_publisher = nh.advertise<nav_msgs::Odometry>("odom", 100);
 
+
     // TF Broadcaster
     odom_broadcaster = new tf::TransformBroadcaster;
 
-    if (activate_experimental_topics)
-    {
-        ros::Subscriber control_cmd_vel_subscriber = nh.subscribe("controller/cmd_vel", 100, ros_cmd_vel_callback);
-    }
 
-
-    // Node Param
+    // Parameters
+    // WHILL Report Packet Interval
     nh.getParam("send_interval", interval);
     if (interval < 10)
     {
@@ -299,13 +293,28 @@ int main(int argc, char **argv)
     }
     ROS_INFO("param: send_interval=%d", interval);
 
-    std::string port = "/dev/tty.whill";
+    // Serial Port Device Name
+    std::string serialport;
+    nh.param<std::string>("serialport", serialport, "/dev/ttyUSB0");
+
+    // Disable publishing odometry tf
+    nh.param<bool>("publish_tf", publish_tf, true);
+
+    // Enable Experimantal Topics
+    bool activate_experimental_topics;
+    nh.param<bool>("activate_experimental_topics", activate_experimental_topics, false);
+    if (activate_experimental_topics)
+    {
+        ros::Subscriber control_cmd_vel_subscriber = nh.subscribe("controller/cmd_vel", 100, ros_cmd_vel_callback);
+    }
+
+
+
     unsigned long baud = 38400;
-
     serial::Timeout timeout = serial::Timeout::simpleTimeout(0);
-    timeout.write_timeout_multiplier = 5;
+    timeout.write_timeout_multiplier = 5;  // Wait 5ms every bytes
 
-    ser = new serial::Serial(port, baud, timeout);
+    ser = new serial::Serial(serialport, baud, timeout);
     ser->flush();
 
     whill = new WHILL(serialRead, serialWrite);
