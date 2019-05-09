@@ -7,12 +7,8 @@
     </node>
 
     <arg name="serialport" default="$(env TTY_WHILL)"/>
-    <node pkg="ros_whill" type="whill_modelc_controller" name="whill_modelc_controller" output="screen">
-        <param name="serialport" value="$(arg serialport)"/>
-    </node>
-    
-    <node pkg="ros_whill" type="whill_modelc_publisher" name="whill_modelc_publisher" output="screen" >
-        <param name="wheel_radius" value="0.135"/>
+
+    <node pkg="ros_whill" type="ros_whill" name="ros_whill" output="screen" >
         <param name="serialport" value="$(arg serialport)"/>
     </node>
 </launch>
