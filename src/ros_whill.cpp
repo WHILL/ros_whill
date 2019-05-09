@@ -33,6 +33,8 @@ SOFTWARE.
 #include "sensor_msgs/BatteryState.h"
 #include "nav_msgs/Odometry.h"
 
+#include "std_srvs/Empty.h"
+
 #include "tf/transform_broadcaster.h"
 
 #include "whill/WHILL.h"   
@@ -64,7 +66,7 @@ ros::Publisher ros_battery_state_publisher;
 ros::Publisher ros_odom_publisher;
 
 // TF Broadcaster
-tf::TransformBroadcaster *odom_broadcaster;
+tf::TransformBroadcaster *odom_broadcaster = nullptr;
 
 // 
 // ROS Callbacks
@@ -99,6 +101,13 @@ void ros_cmd_vel_callback(const geometry_msgs::Twist::ConstPtr &cmd_vel)
     }
 }
 
+bool ros_srv_odom_clear_callback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res)
+{
+    ROS_INFO("Clear Odometry");
+    odom.reset();
+    return true;
+}
+
 //
 //  UART Interface
 //
@@ -122,18 +131,17 @@ int serialWrite(std::vector<uint8_t> &data)
     return 0;
 }
 
+
+
 //
 // WHILL
 //
 void whill_callback_data1(WHILL *caller)
 {
-    ros::Time currentTime = ros::Time::now();
-    
+
     // This function is called when receive Joy/Accelerometer/Gyro,etc.
-    ROS_INFO("Updated");
-    ROS_INFO("%d",caller->joy.x);
-    ROS_INFO("%d", caller->joy.y);
-    ROS_INFO("interval:%d", caller->_interval);
+
+    ros::Time currentTime = ros::Time::now();
 
     // Joy
     sensor_msgs::Joy joy;
@@ -142,6 +150,7 @@ void whill_callback_data1(WHILL *caller)
     joy.axes[0] = -caller->joy.x / 100.0f; //X
     joy.axes[1] = caller->joy.y / 100.0f; //Y
     ros_joystick_state_publisher.publish(joy);
+
 
     // IMU
     sensor_msgs::Imu imu;
@@ -158,6 +167,7 @@ void whill_callback_data1(WHILL *caller)
     imu.linear_acceleration.z = caller->accelerometer.z * 9.80665; // G to m/ss
     ros_imu_publisher.publish(imu);
 
+
     // Battery
     sensor_msgs::BatteryState batteryState;
     batteryState.voltage = 25.2;                           //[V] Spec voltage, since raw voltage is not provided.
@@ -171,6 +181,7 @@ void whill_callback_data1(WHILL *caller)
     batteryState.present = true;
     batteryState.location = "0";
     ros_battery_state_publisher.publish(batteryState);
+
 
     // JointState
     sensor_msgs::JointState jointState;
@@ -218,6 +229,7 @@ void whill_callback_data1(WHILL *caller)
     odom_msg.child_frame_id = "base_link";
     ros_odom_publisher.publish(odom_msg);
 
+
     // Odometory TF
     if (publish_tf)
     {
@@ -250,12 +262,12 @@ int main(int argc, char **argv)
     std::string serialport;
     nh.param<std::string>("serialport", serialport, "/dev/ttyUSB0");
 
-    bool activate_experimental;
-    nh.param<bool>("activate_experimental", activate_experimental, false);
+    bool activate_experimental_topics;
+    nh.param<bool>("activate_experimental_topics", activate_experimental_topics, false);
 
     // Services
     //set_power_service_service = nh.advertiseService("power/on", set_power_service_callback);
-    //clear_odom_service        = nh.advertiseService("odom/clear", &clearOdom);
+    ros::ServiceServer clear_odom_service        = nh.advertiseService("odom/clear", &ros_srv_odom_clear_callback);
 
     // Subscriber
     ros::Subscriber joystick_subscriber = nh.subscribe("controller/joy", 100, ros_joystick_callback);
@@ -271,11 +283,10 @@ int main(int argc, char **argv)
     // TF Broadcaster
     odom_broadcaster = new tf::TransformBroadcaster;
 
-    if (activate_experimental)
+    if (activate_experimental_topics)
     {
         ros::Subscriber control_cmd_vel_subscriber = nh.subscribe("controller/cmd_vel", 100, ros_cmd_vel_callback);
     }
-
 
 
     // Node Param
