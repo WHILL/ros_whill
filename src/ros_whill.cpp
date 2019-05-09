@@ -154,6 +154,7 @@ void whill_callback_data1(WHILL *caller)
 
     // IMU
     sensor_msgs::Imu imu;
+    imu.header.stamp = currentTime;
     imu.header.frame_id = "imu";
 
     imu.orientation_covariance[0] = -1; // Orientation is unknown
@@ -170,7 +171,8 @@ void whill_callback_data1(WHILL *caller)
 
     // Battery
     sensor_msgs::BatteryState batteryState;
-    batteryState.voltage = 25.2;                           //[V] Spec voltage, since raw voltage is not provided.
+    batteryState.header.stamp = currentTime;
+    batteryState.voltage = 25.2;                               //[V] Spec voltage, since raw voltage is not provided.
     batteryState.current = -caller->battery.current / 1000.0f; // mA -> A
     batteryState.charge = std::numeric_limits<float>::quiet_NaN();
     batteryState.design_capacity = 10.04;                 //[Ah]
@@ -185,6 +187,7 @@ void whill_callback_data1(WHILL *caller)
 
     // JointState
     sensor_msgs::JointState jointState;
+    jointState.header.stamp = currentTime;
     jointState.name.resize(2);
     jointState.position.resize(2);
     jointState.velocity.resize(2);
