@@ -11,7 +11,16 @@
     <arg name="serialport" default="$(env TTY_WHILL)"/>
 
     <node pkg="ros_whill" type="ros_whill" name="whill" output="screen" >
+
+        <!-- Initial Speed Profile -->
+        <rosparam file="$(find ros_whill)/params/initial_speedprofile.yaml" command="load" />
+
+        <!-- Serial Device name -->
         <param name="serialport" value="$(arg serialport)"/>
+
+        <!-- Output Odometry tf or not. If other node publishes odom->base_link tf, Change value to "false" -->
+        <param name="publish_tf" value="true"/>  
+        
     </node>
 </launch>
 
