@@ -119,7 +119,7 @@ public:
     void begin(unsigned int interval);
 
     const float wheel_radius = 0.1325;
-    const float wheel_tread = 0.248;
+    const float tread = 0.496;
 
     //Callback
     enum EVENT

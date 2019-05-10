@@ -37,3 +37,12 @@ uint8_t convert_mpss_to_whill_acc(float mpss)
     double kmh_p_s = mpss * 3.6; // m/ss to km/h/s
     return kmh_p_s  /(0.4 * (32.0f / 256.0f));
 }
+
+uint8_t convert_radps_to_whill_speed(float tread, float radps){
+    double mps = radps * tread / 2 * 2.0f;  // Half Tread * Turning Fix, Wheel Speed will be Max/2 in spin turning.
+    return convert_mps_to_whill_speed(mps);
+}
+uint8_t convert_radpss_to_whill_acc(float tread, float radpss){
+    double mpss = radpss * tread / 2 * 2.0f; // Half Tread * Turning Fix
+    return convert_mpss_to_whill_acc(mpss);
+}

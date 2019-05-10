@@ -117,6 +117,13 @@ bool ros_srv_odom_clear_callback(std_srvs::Empty::Request &req, std_srvs::Empty:
 
 bool ros_srv_set_speed_profile(ros_whill::SetSpeedProfile::Request &req, ros_whill::SetSpeedProfile::Response &res)
 {
+
+    if(whill == nullptr){
+        res.success = false;
+        res.status_message = "whill instance is not initialzied.";
+        return true;
+    }
+
     WHILL::SpeedProfile profile;
 
     profile.forward.speed = convert_mps_to_whill_speed(req.forward.speed);
@@ -125,9 +132,9 @@ bool ros_srv_set_speed_profile(ros_whill::SetSpeedProfile::Request &req, ros_whi
     profile.backward.speed = convert_mps_to_whill_speed(req.backward.speed);
     profile.backward.acc = convert_mpss_to_whill_acc(req.backward.acc);
     profile.backward.dec = convert_mpss_to_whill_acc(req.backward.dec);
-    profile.turn.speed = convert_mps_to_whill_speed(req.turn.speed);
-    profile.turn.acc = convert_mpss_to_whill_acc(req.turn.acc);
-    profile.turn.dec = convert_mpss_to_whill_acc(req.turn.dec);
+    profile.turn.speed = convert_radps_to_whill_speed(whill->tread, req.turn.speed);
+    profile.turn.acc = convert_radpss_to_whill_acc(whill->tread,req.turn.acc);
+    profile.turn.dec = convert_radpss_to_whill_acc(whill->tread, req.turn.dec);
 
     ROS_INFO("Setting Spped Profile");
     ROS_INFO("Forward\tSpeed:%d,Acc:%d,Dec:%d", profile.forward.speed, profile.forward.acc, profile.forward.dec);
@@ -176,24 +183,18 @@ bool ros_srv_set_speed_profile(ros_whill::SetSpeedProfile::Request &req, ros_whi
         return true;
     }
 
-    if (whill)
+
+    if (whill->setSpeedProfile(profile, 4))
     {
-        if (whill->setSpeedProfile(profile, 4))
-        {
-            res.success = true;
-            res.status_message = "Set Speed Profile command has been sent.";
-        }
-        else
-        {
-            res.success = false;
-            res.status_message = "Invalid Value.";
-        }
+        res.success = true;
+        res.status_message = "Set Speed Profile command has been sent.";
     }
     else
     {
         res.success = false;
-        res.status_message = "whill instance is not initialzied.";
+        res.status_message = "Invalid Value.";
     }
+
     return true;
 }
 
@@ -405,7 +406,7 @@ int main(int argc, char **argv)
     ser->flush();
 
     whill = new WHILL(serialRead, serialWrite);
-    odom.setParameters(whill->wheel_radius, whill->wheel_tread);
+    odom.setParameters(whill->wheel_radius, whill->tread);
     whill->register_callback(whill_callback_data1, WHILL::EVENT::CALLBACK_DATA1);
     whill->register_callback(whill_callback_powered_on, WHILL::EVENT::CALLBACK_POWER_ON);
     whill->begin(20); // ms

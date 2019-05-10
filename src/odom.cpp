@@ -79,7 +79,7 @@ void Odometry::update(sensor_msgs::JointState jointState, double dt)
     long double vl = angle_vel_l * wheel_radius;
 
     long double delta_L = (vr + vl) / 2.0;
-    long double delta_theta = (vr - vl) / (2.0 * wheel_tread);
+    long double delta_theta = (vr - vl) / (wheel_tread);
 
     pose.x += delta_L * dt * cosl(pose.theta + delta_theta * dt / 2.0);
     pose.y += delta_L * dt * sinl(pose.theta + delta_theta * dt / 2.0);
