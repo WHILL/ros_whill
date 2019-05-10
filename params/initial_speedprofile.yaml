@@ -1,0 +1,9 @@
+init_speed/forward/speed: 0.567
+init_speed/forward/acc: 0.23
+init_speed/forward/dec: 1.25
+init_speed/backward/speed: 0.557
+init_speed/backward/acc: 0.34
+init_speed/backward/dec: 0.89
+init_speed/turn/speed: 0.8
+init_speed/turn/acc: 0.79
+init_speed/turn/dec: 1.8

@@ -57,8 +57,6 @@ Odometry odom;
 int interval = 0;       // WHILL Data frequency
 bool publish_tf = true; // Enable publishing Odometry TF
 
-
-
 //
 // ROS Objects
 //
@@ -72,8 +70,6 @@ ros::Publisher ros_odom_publisher;
 
 // TF Broadcaster
 tf::TransformBroadcaster *odom_broadcaster = nullptr;
-
-
 
 //
 // ROS Callbacks
@@ -118,7 +114,8 @@ bool ros_srv_odom_clear_callback(std_srvs::Empty::Request &req, std_srvs::Empty:
 bool ros_srv_set_speed_profile(ros_whill::SetSpeedProfile::Request &req, ros_whill::SetSpeedProfile::Response &res)
 {
 
-    if(whill == nullptr){
+    if (whill == nullptr)
+    {
         res.success = false;
         res.status_message = "whill instance is not initialzied.";
         return true;
@@ -133,7 +130,7 @@ bool ros_srv_set_speed_profile(ros_whill::SetSpeedProfile::Request &req, ros_whi
     profile.backward.acc = convert_mpss_to_whill_acc(req.backward.acc);
     profile.backward.dec = convert_mpss_to_whill_acc(req.backward.dec);
     profile.turn.speed = convert_radps_to_whill_speed(whill->tread, req.turn.speed);
-    profile.turn.acc = convert_radpss_to_whill_acc(whill->tread,req.turn.acc);
+    profile.turn.acc = convert_radpss_to_whill_acc(whill->tread, req.turn.acc);
     profile.turn.dec = convert_radpss_to_whill_acc(whill->tread, req.turn.dec);
 
     ROS_INFO("Setting Spped Profile");
@@ -144,7 +141,6 @@ bool ros_srv_set_speed_profile(ros_whill::SetSpeedProfile::Request &req, ros_whi
     // Validate Value
     bool is_valid = false;
     auto error = profile.check();
-    ROS_INFO("error:%d", error);
     switch (error)
     {
     case WHILL::SpeedProfile::Error::InvalidForwardSpeed:
@@ -178,11 +174,11 @@ bool ros_srv_set_speed_profile(ros_whill::SetSpeedProfile::Request &req, ros_whi
         is_valid = true;
     }
 
-    if(!is_valid){
+    if (!is_valid)
+    {
         res.success = false;
         return true;
     }
-
 
     if (whill->setSpeedProfile(profile, 4))
     {
@@ -409,6 +405,27 @@ int main(int argc, char **argv)
     odom.setParameters(whill->wheel_radius, whill->tread);
     whill->register_callback(whill_callback_data1, WHILL::EVENT::CALLBACK_DATA1);
     whill->register_callback(whill_callback_powered_on, WHILL::EVENT::CALLBACK_POWER_ON);
+
+    // Initial Speed Profile
+    ros_whill::SetSpeedProfile::Request init_speed_req;
+    if (nh.getParam("init_speed/forward/speed", init_speed_req.forward.speed) &&
+        nh.getParam("init_speed/forward/acc", init_speed_req.forward.acc) &&
+        nh.getParam("init_speed/forward/dec", init_speed_req.forward.dec) &&
+        nh.getParam("init_speed/backward/speed", init_speed_req.backward.speed) &&
+        nh.getParam("init_speed/backward/acc", init_speed_req.backward.acc) &&
+        nh.getParam("init_speed/backward/dec", init_speed_req.backward.dec) &&
+        nh.getParam("init_speed/turn/speed", init_speed_req.turn.speed) &&
+        nh.getParam("init_speed/turn/acc", init_speed_req.turn.acc) &&
+        nh.getParam("init_speed/turn/dec", init_speed_req.turn.dec)
+    )
+    {
+        ros_whill::SetSpeedProfile::Response res;
+        ros_srv_set_speed_profile(init_speed_req,res);
+        if(res.success == false){
+            ROS_INFO("Could not set Initial Profile.");
+        }
+    }
+
     whill->begin(20); // ms
 
     ros::AsyncSpinner spinner(1);
