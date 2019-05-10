@@ -118,6 +118,9 @@ public:
     WHILL(int (*read)(std::vector<uint8_t> &data), int (*write)(std::vector<uint8_t> &data));
     void begin(unsigned int interval);
 
+    const float wheel_radius = 0.1325;
+    const float wheel_tread = 0.248;
+
     //Callback
     enum EVENT
     {

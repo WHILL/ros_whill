@@ -405,6 +405,7 @@ int main(int argc, char **argv)
     ser->flush();
 
     whill = new WHILL(serialRead, serialWrite);
+    odom.setParameters(whill->wheel_radius, whill->wheel_tread);
     whill->register_callback(whill_callback_data1, WHILL::EVENT::CALLBACK_DATA1);
     whill->register_callback(whill_callback_powered_on, WHILL::EVENT::CALLBACK_POWER_ON);
     whill->begin(20); // ms

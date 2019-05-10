@@ -36,14 +36,15 @@ private:
         long double theta;
     } Space2D;
 
-    static constexpr double wheel_radius_ = 0.1325;
-    static constexpr double wheel_tread_ = 0.248;
+    double wheel_radius;
+    double wheel_tread;
 
     Space2D pose;
     Space2D velocity;
 
 public:
     Odometry();
+    void setParameters(double _wheel_radius, double _wheel_tread);
     void update(sensor_msgs::JointState joint, double dt);
     void set(Space2D pose);
     void reset();

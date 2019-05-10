@@ -62,6 +62,11 @@ long double Odometry::confineRadian(long double rad)
     return rad;
 }
 
+void Odometry::setParameters(double _wheel_radius, double _wheel_tread){
+    this->wheel_radius = _wheel_radius;
+    this->wheel_tread = _wheel_tread;
+}
+
 void Odometry::update(sensor_msgs::JointState jointState, double dt)
 {
     if (dt == 0)
@@ -70,11 +75,11 @@ void Odometry::update(sensor_msgs::JointState jointState, double dt)
     double angle_vel_r = jointState.velocity[1];
     double angle_vel_l = -jointState.velocity[0];
 
-    long double vr = angle_vel_r * wheel_radius_;
-    long double vl = angle_vel_l * wheel_radius_;
+    long double vr = angle_vel_r * wheel_radius;
+    long double vl = angle_vel_l * wheel_radius;
 
     long double delta_L = (vr + vl) / 2.0;
-    long double delta_theta = (vr - vl) / (2.0 * wheel_tread_);
+    long double delta_theta = (vr - vl) / (2.0 * wheel_tread);
 
     pose.x += delta_L * dt * cosl(pose.theta + delta_theta * dt / 2.0);
     pose.y += delta_L * dt * sinl(pose.theta + delta_theta * dt / 2.0);
