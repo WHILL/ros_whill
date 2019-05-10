@@ -1,3 +1,3 @@
-float32 speed
-float32 acc
-float32 dec
+float32 speed  # m/s
+float32 acc    # m/ss
+float32 dec    # m/ss

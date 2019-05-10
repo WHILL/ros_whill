@@ -111,7 +111,7 @@ private:
     PacketParser parser;
 
     // Experimantal
-    uint8_t past_time_ms = 0; 
+    uint8_t past_time_ms = 0;
     static uint8_t calc_time_diff(uint8_t past, uint8_t current);
 
 public:
@@ -133,73 +133,90 @@ public:
 
     void refresh();
 
-    void keep_joy_delay(unsigned long ms);
-    void delay(unsigned long ms);
+    class SpeedProfile
+    {
+    private:
+        template <typename U,typename T,typename Z>
+        bool checkRange(U min, T value, Z max);
+
+    public:
+        enum Error
+        {
+            NoError,
+            InvalidForwardSpeed,
+            InvalidBackwardSpeed,
+            InvalidTurnSpeed,
+            InvalidForwardAcc,
+            InvalidBackwardAcc,
+            InvalidTurnAcc,
+            InvalidForwardDec,
+            InvalidBackwardDec,
+            InvalidTurnDec,
+        };
+
+        class Pack
+        {
+            public:
+            uint8_t speed;
+            uint8_t acc;
+            uint8_t dec;
+        };
+        
+        Error check();
+        Pack forward;
+        Pack backward;
+        Pack turn;
+    };
 
     typedef struct
     {
-        unsigned char forward_spped;
-        unsigned char forward_acceleration;
-        unsigned char forward_deceleration;
+        int x;
+        int y;
+        int z;
+    } Data3D;
 
-        unsigned char reverse_speed;
-        unsigned char reverse_acceleration;
-        unsigned char reverse_deceleration;
+    typedef struct
+    {
+        int x;
+        int y;
+    } Joy;
 
-        unsigned char turn_speed;
-        unsigned char turn_acceleration;
-        unsigned char turn_deceleration;
-        } SpeedProfile;
+    typedef struct
+    {
+        unsigned char level;
+        signed long current;
+    } Battery;
 
-        typedef struct
-        {
-            int x;
-            int y;
-            int z;
-        } Data3D;
+    typedef struct
+    {
+        float angle;
+        int speed;
+    } Motor;
 
-        typedef struct
-        {
-            int x;
-            int y;
-        } Joy;
+    Data3D accelerometer = {0};
+    Data3D gyro = {0};
+    Joy virtual_joy = {0};
+    Joy joy = {0};
+    Battery battery = {0};
+    Motor left_motor = {0};
+    Motor right_motor = {0};
+    bool power = false;
+    int speed_mode_indicator = -1;
 
-        typedef struct
-        {
-            unsigned char level;
-            signed long current;
-        } Battery;
+    // Experimental
+    int32_t _interval = -1; // ms
 
-        typedef struct
-        {
-            float angle;
-            int speed;
-        } Motor;
+    //WHILL commands
+    void startSendingData0(unsigned int interval_ms, unsigned char speed_mode);
+    void startSendingData1(unsigned int interval_ms);
+    void stopSendingData();
+    void setJoystick(int x, int y);
+    void setPower(bool power);
+    void setBatteryVoltaegeOut(bool out);
+    bool setSpeedProfile(SpeedProfile &profile, unsigned char speed_mode);
 
-        Data3D accelerometer = {0};
-        Data3D gyro = {0};
-        Joy virtual_joy = {0};
-        Joy joy = {0};
-        Battery battery = {0};
-        Motor left_motor = {0};
-        Motor right_motor = {0};
-        bool power = false;
-        int speed_mode_indicator = -1;
-
-        // Experimental
-        int32_t _interval = -1; // ms
-
-        //WHILL commands
-        void startSendingData0(unsigned int interval_ms, unsigned char speed_mode);
-        void startSendingData1(unsigned int interval_ms);
-        void stopSendingData();
-        void setJoystick(int x, int y);
-        void setPower(bool power);
-        void setBatteryVoltaegeOut(bool out);
-        void setSpeedProfile(SpeedProfile * profile, unsigned char speed_mode);
-
-        // Experimental
-        void setSpeed(float linear, float angular); // Linear:[m/s], Angular:[rad/s]
+    // Experimental
+    void setSpeed(float linear, float angular); // Linear:[m/s], Angular:[rad/s]
 };
 
 #endif

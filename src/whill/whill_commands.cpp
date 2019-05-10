@@ -23,13 +23,14 @@ THE SOFTWARE.
 */
 
 #include "WHILL.h"
+#include <stdio.h>
 
 void WHILL::startSendingData0(unsigned int interval_ms,unsigned char speed_mode){
     unsigned char payload[] =  {0x00,  //Start Sending Data
                                 0x00,  //Data0 (Speed profiles)
                                 (unsigned char)(interval_ms<<8 & 0xFF),
                                 (unsigned char)(interval_ms<<0 & 0xFF),
-                                speed_mode};
+                             speed_mode};
     Packet packet(payload,sizeof(payload));
     packet.build();
     transferPacket(&packet);
@@ -75,22 +76,27 @@ void WHILL::setJoystick(int x,int y){
 }
 
 
-void WHILL::setSpeedProfile(SpeedProfile* profile,unsigned char speed_mode){
-     unsigned char payload[] = {0x04,
-                                profile->forward_spped,
-                                profile->forward_acceleration,
-                                profile->forward_deceleration,
-                                profile->reverse_speed,
-                                profile->reverse_acceleration,
-                                profile->reverse_deceleration,
-                                profile->turn_speed,
-                                profile->turn_acceleration,
-                                profile->turn_deceleration};                         
+bool WHILL::setSpeedProfile(SpeedProfile &profile,unsigned char speed_mode){
+
+    if(profile.check() != SpeedProfile::Error::NoError)
+        return false;
+
+    unsigned char payload[] = {0x04,
+                               speed_mode,
+                               profile.forward.speed,
+                               profile.forward.acc,
+                               profile.forward.dec,
+                               profile.backward.speed,
+                               profile.backward.acc,
+                               profile.backward.dec,
+                               profile.turn.speed,
+                               profile.turn.acc,
+                               profile.turn.dec};                         
     Packet packet(payload,sizeof(payload));
     packet.build();
-    transferPacket(&packet);      
+    transferPacket(&packet);
+    return true;
 }
-
 
 void WHILL::setBatteryVoltaegeOut(bool enable){
      unsigned char payload[] = {0x05,

@@ -35,12 +35,16 @@ SOFTWARE.
 
 #include "std_srvs/Empty.h"
 
+#include "ros_whill/SpeedPack.h"
+#include "ros_whill/SetSpeedProfile.h"
+
 #include "tf/transform_broadcaster.h"
 
-#include "whill/WHILL.h"   
-#include "serial/serial.h"  // wjwood/Serial (ros-melodic-serial)
+#include "whill/WHILL.h"
+#include "serial/serial.h" // wjwood/Serial (ros-melodic-serial)
 
 #include "utils/rotation_tools.h"
+#include "utils/unit_convert.h"
 #include "odom.h"
 
 // #include "./includes/subscriber.hpp"
@@ -49,10 +53,11 @@ SOFTWARE.
 WHILL *whill = nullptr;
 Odometry odom;
 
-
 // Global Parameters
-int interval = 0;          // WHILL Data frequency
-bool publish_tf = true;    // Enable publishing Odometry TF
+int interval = 0;       // WHILL Data frequency
+bool publish_tf = true; // Enable publishing Odometry TF
+
+
 
 //
 // ROS Objects
@@ -68,7 +73,9 @@ ros::Publisher ros_odom_publisher;
 // TF Broadcaster
 tf::TransformBroadcaster *odom_broadcaster = nullptr;
 
-// 
+
+
+//
 // ROS Callbacks
 //
 void ros_joystick_callback(const sensor_msgs::Joy::ConstPtr &joy)
@@ -108,6 +115,88 @@ bool ros_srv_odom_clear_callback(std_srvs::Empty::Request &req, std_srvs::Empty:
     return true;
 }
 
+bool ros_srv_set_speed_profile(ros_whill::SetSpeedProfile::Request &req, ros_whill::SetSpeedProfile::Response &res)
+{
+    WHILL::SpeedProfile profile;
+
+    profile.forward.speed = convert_mps_to_whill_speed(req.forward.speed);
+    profile.forward.acc = convert_mpss_to_whill_acc(req.forward.acc);
+    profile.forward.dec = convert_mpss_to_whill_acc(req.forward.dec);
+    profile.backward.speed = convert_mps_to_whill_speed(req.backward.speed);
+    profile.backward.acc = convert_mpss_to_whill_acc(req.backward.acc);
+    profile.backward.dec = convert_mpss_to_whill_acc(req.backward.dec);
+    profile.turn.speed = convert_mps_to_whill_speed(req.turn.speed);
+    profile.turn.acc = convert_mpss_to_whill_acc(req.turn.acc);
+    profile.turn.dec = convert_mpss_to_whill_acc(req.turn.dec);
+
+    ROS_INFO("Setting Spped Profile");
+    ROS_INFO("Forward\tSpeed:%d,Acc:%d,Dec:%d", profile.forward.speed, profile.forward.acc, profile.forward.dec);
+    ROS_INFO("Bacward\tSpeed:%d,Acc:%d,Dec:%d", profile.backward.speed, profile.backward.acc, profile.backward.dec);
+    ROS_INFO("Turn\tSpeed:%d,Acc:%d,Dec:%d\n", profile.turn.speed, profile.turn.acc, profile.turn.dec);
+
+    // Validate Value
+    bool is_valid = false;
+    auto error = profile.check();
+    ROS_INFO("error:%d", error);
+    switch (error)
+    {
+    case WHILL::SpeedProfile::Error::InvalidForwardSpeed:
+        res.status_message = "Invalid Forward Speed";
+        break;
+    case WHILL::SpeedProfile::Error::InvalidBackwardSpeed:
+        res.status_message = "Invalid Backward Speed";
+        break;
+    case WHILL::SpeedProfile::Error::InvalidTurnSpeed:
+        res.status_message = "Invalid Turn Speed";
+        break;
+    case WHILL::SpeedProfile::Error::InvalidForwardAcc:
+        res.status_message = "Invalid Forward Acc";
+        break;
+    case WHILL::SpeedProfile::Error::InvalidBackwardAcc:
+        res.status_message = "Invalid Backward Acc";
+        break;
+    case WHILL::SpeedProfile::Error::InvalidTurnAcc:
+        res.status_message = "Invalid Turn Acc";
+        break;
+    case WHILL::SpeedProfile::Error::InvalidForwardDec:
+        res.status_message = "Invalid Forward Dec";
+        break;
+    case WHILL::SpeedProfile::Error::InvalidBackwardDec:
+        res.status_message = "Invalid Backward Dec";
+        break;
+    case WHILL::SpeedProfile::Error::InvalidTurnDec:
+        res.status_message = "Invalid Turn Dec";
+        break;
+    default:
+        is_valid = true;
+    }
+
+    if(!is_valid){
+        res.success = false;
+        return true;
+    }
+
+    if (whill)
+    {
+        if (whill->setSpeedProfile(profile, 4))
+        {
+            res.success = true;
+            res.status_message = "Set Speed Profile command has been sent.";
+        }
+        else
+        {
+            res.success = false;
+            res.status_message = "Invalid Value.";
+        }
+    }
+    else
+    {
+        res.success = false;
+        res.status_message = "whill instance is not initialzied.";
+    }
+    return true;
+}
+
 //
 //  UART Interface
 //
@@ -131,8 +220,6 @@ int serialWrite(std::vector<uint8_t> &data)
     return 0;
 }
 
-
-
 //
 // WHILL
 //
@@ -148,9 +235,8 @@ void whill_callback_data1(WHILL *caller)
     joy.header.stamp = currentTime;
     joy.axes.resize(2);
     joy.axes[0] = -caller->joy.x / 100.0f; //X
-    joy.axes[1] = caller->joy.y / 100.0f; //Y
+    joy.axes[1] = caller->joy.y / 100.0f;  //Y
     ros_joystick_state_publisher.publish(joy);
-
 
     // IMU
     sensor_msgs::Imu imu;
@@ -168,14 +254,13 @@ void whill_callback_data1(WHILL *caller)
     imu.linear_acceleration.z = caller->accelerometer.z * 9.80665; // G to m/ss
     ros_imu_publisher.publish(imu);
 
-
     // Battery
     sensor_msgs::BatteryState batteryState;
     batteryState.header.stamp = currentTime;
     batteryState.voltage = 25.2;                               //[V] Spec voltage, since raw voltage is not provided.
     batteryState.current = -caller->battery.current / 1000.0f; // mA -> A
     batteryState.charge = std::numeric_limits<float>::quiet_NaN();
-    batteryState.design_capacity = 10.04;                 //[Ah]
+    batteryState.design_capacity = 10.04;                     //[Ah]
     batteryState.percentage = caller->battery.level / 100.0f; // Percentage
     batteryState.power_supply_status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
     batteryState.power_supply_health = sensor_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN;
@@ -183,7 +268,6 @@ void whill_callback_data1(WHILL *caller)
     batteryState.present = true;
     batteryState.location = "0";
     ros_battery_state_publisher.publish(batteryState);
-
 
     // JointState
     sensor_msgs::JointState jointState;
@@ -198,30 +282,37 @@ void whill_callback_data1(WHILL *caller)
     jointState.position[1] = caller->right_motor.angle; //Rad
 
     static double joint_past[2] = {0.0f, 0.0f};
-    if(caller->_interval == -1){
+    if (caller->_interval == -1)
+    {
         // Standard, Constant specified time intervel
         jointState.velocity[0] = rad_diff(joint_past[0], jointState.position[0]) / (double(interval) / 1000.0f); // Rad/sec
         jointState.velocity[1] = rad_diff(joint_past[1], jointState.position[1]) / (double(interval) / 1000.0f); // Rad/sec
-    }else if(caller->_interval == 0){
+    }
+    else if (caller->_interval == 0)
+    {
         // Experimental, Motor Control Disabled (= Brake Locked)
         jointState.velocity[0] = 0.0f;
         jointState.velocity[1] = 0.0f;
-    }else{
+    }
+    else
+    {
         // Experimental, Under motor controlling
-        jointState.velocity[0] = rad_diff(joint_past[0], jointState.position[0]) / (double(caller->_interval) / 1000.0f);  // Rad/sec
-        jointState.velocity[1] = rad_diff(joint_past[1], jointState.position[1]) / (double(caller->_interval) / 1000.0f);  // Rad/sec
+        jointState.velocity[0] = rad_diff(joint_past[0], jointState.position[0]) / (double(caller->_interval) / 1000.0f); // Rad/sec
+        jointState.velocity[1] = rad_diff(joint_past[1], jointState.position[1]) / (double(caller->_interval) / 1000.0f); // Rad/sec
     }
     joint_past[0] = jointState.position[0];
     joint_past[1] = jointState.position[1];
 
     ros_jointstate_publisher.publish(jointState);
 
-
     // Odometory
-    if(caller->_interval == -1){
+    if (caller->_interval == -1)
+    {
         // Standard
         odom.update(jointState, interval / 1000.0f);
-    }else if(caller->_interval >= 0){
+    }
+    else if (caller->_interval >= 0)
+    {
         // Experimental
         odom.update(jointState, caller->_interval / 1000.0f);
     }
@@ -232,7 +323,6 @@ void whill_callback_data1(WHILL *caller)
     odom_msg.child_frame_id = "base_link";
     ros_odom_publisher.publish(odom_msg);
 
-
     // Odometory TF
     if (publish_tf)
     {
@@ -240,7 +330,8 @@ void whill_callback_data1(WHILL *caller)
         odom_trans.header.stamp = currentTime;
         odom_trans.header.frame_id = "odom";
         odom_trans.child_frame_id = "base_link";
-        if (odom_broadcaster){
+        if (odom_broadcaster)
+        {
             odom_broadcaster->sendTransform(odom_trans);
         }
     }
@@ -252,7 +343,6 @@ void whill_callback_powered_on(WHILL *caller)
     ROS_INFO("power_on");
 }
 
-
 //
 // Main
 //
@@ -262,16 +352,14 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "whill");
     ros::NodeHandle nh("~");
 
-
     // Services
     //set_power_service_service = nh.advertiseService("power/on", set_power_service_callback);
-    ros::ServiceServer clear_odom_service        = nh.advertiseService("odom/clear", &ros_srv_odom_clear_callback);
-
+    ros::ServiceServer clear_odom_service = nh.advertiseService("odom/clear", &ros_srv_odom_clear_callback);
+    ros::ServiceServer set_speed_profile_service = nh.advertiseService("speedProfile/set", &ros_srv_set_speed_profile);
 
     // Subscriber
     ros::Subscriber joystick_subscriber = nh.subscribe("controller/joy", 100, ros_joystick_callback);
     ros::Subscriber twist_subscriber = nh.subscribe("controller/cmd_vel", 100, ros_cmd_vel_callback);
-
 
     // Publishers
     ros_joystick_state_publisher = nh.advertise<sensor_msgs::Joy>("states/joy", 100);
@@ -280,10 +368,8 @@ int main(int argc, char **argv)
     ros_battery_state_publisher = nh.advertise<sensor_msgs::BatteryState>("states/batteryState", 100);
     ros_odom_publisher = nh.advertise<nav_msgs::Odometry>("odom", 100);
 
-
     // TF Broadcaster
     odom_broadcaster = new tf::TransformBroadcaster;
-
 
     // Parameters
     // WHILL Report Packet Interval
@@ -311,11 +397,9 @@ int main(int argc, char **argv)
         ros::Subscriber control_cmd_vel_subscriber = nh.subscribe("controller/cmd_vel", 100, ros_cmd_vel_callback);
     }
 
-
-
     unsigned long baud = 38400;
     serial::Timeout timeout = serial::Timeout::simpleTimeout(0);
-    timeout.write_timeout_multiplier = 5;  // Wait 5ms every bytes
+    timeout.write_timeout_multiplier = 5; // Wait 5ms every bytes
 
     ser = new serial::Serial(serialport, baud, timeout);
     ser->flush();
@@ -324,8 +408,6 @@ int main(int argc, char **argv)
     whill->register_callback(whill_callback_data1, WHILL::EVENT::CALLBACK_DATA1);
     whill->register_callback(whill_callback_powered_on, WHILL::EVENT::CALLBACK_POWER_ON);
     whill->begin(20); // ms
-
-
 
     ros::AsyncSpinner spinner(1);
     spinner.start();
