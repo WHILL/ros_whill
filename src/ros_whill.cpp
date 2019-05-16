@@ -388,10 +388,12 @@ int main(int argc, char **argv)
     // Enable Experimantal Topics
     bool experimental_topics;
     nh.param<bool>("experimental_topics", experimental_topics, false);
+
+    ros::Subscriber cmd_vel_subscriber;
     if (experimental_topics == true)
     {
         ROS_INFO("Experimental topics activated");
-        ros::Subscriber control_cmd_vel_subscriber = nh.subscribe("controller/cmd_vel", 100, ros_cmd_vel_callback);
+        cmd_vel_subscriber = nh.subscribe("controller/cmd_vel", 100, ros_cmd_vel_callback);
     }
 
     unsigned long baud = 38400;
