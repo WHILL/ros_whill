@@ -356,8 +356,7 @@ int main(int argc, char **argv)
 
     // Subscriber
     ros::Subscriber joystick_subscriber = nh.subscribe("controller/joy", 100, ros_joystick_callback);
-    ros::Subscriber twist_subscriber = nh.subscribe("controller/cmd_vel", 100, ros_cmd_vel_callback);
-
+    
     // Publishers
     ros_joystick_state_publisher = nh.advertise<sensor_msgs::Joy>("states/joy", 100);
     ros_jointstate_publisher = nh.advertise<sensor_msgs::JointState>("states/jointState", 100);
@@ -387,10 +386,11 @@ int main(int argc, char **argv)
     nh.param<bool>("publish_tf", publish_tf, true);
 
     // Enable Experimantal Topics
-    bool activate_experimental_topics;
-    nh.param<bool>("activate_experimental_topics", activate_experimental_topics, false);
-    if (activate_experimental_topics)
+    bool experimental_topics;
+    nh.param<bool>("experimental_topics", experimental_topics, false);
+    if (experimental_topics == true)
     {
+        ROS_INFO("Experimental topics activated");
         ros::Subscriber control_cmd_vel_subscriber = nh.subscribe("controller/cmd_vel", 100, ros_cmd_vel_callback);
     }
 
