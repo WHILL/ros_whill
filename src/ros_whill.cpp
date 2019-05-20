@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 #include <string.h>
+#include <iostream>
 #include <stdint.h>
 #include <vector>
 
@@ -56,6 +57,7 @@ Odometry odom;
 // Global Parameters
 int interval = 0;       // WHILL Data frequency
 bool publish_tf = true; // Enable publishing Odometry TF
+ros::Time last_received;
 
 //
 // ROS Objects
@@ -203,7 +205,11 @@ int serialRead(std::vector<uint8_t> &data)
 {
     if (ser && ser->isOpen())
     {
-        return ser->read(data, 30); // How many bytes read in one time.
+        int ret = ser->read(data, 30);
+        if(ret > 0){
+            last_received = ros::Time::now();
+        }
+        return ret; // How many bytes read in one time.
     }
     return 0;
 }
@@ -400,44 +406,88 @@ int main(int argc, char **argv)
     serial::Timeout timeout = serial::Timeout::simpleTimeout(0);
     timeout.write_timeout_multiplier = 5; // Wait 5ms every bytes
 
-    ser = new serial::Serial(serialport, baud, timeout);
-    ser->flush();
-
-    whill = new WHILL(serialRead, serialWrite);
-    odom.setParameters(whill->wheel_radius, whill->tread);
-    whill->register_callback(whill_callback_data1, WHILL::EVENT::CALLBACK_DATA1);
-    whill->register_callback(whill_callback_powered_on, WHILL::EVENT::CALLBACK_POWER_ON);
-
-    // Initial Speed Profile
-    ros_whill::SetSpeedProfile::Request init_speed_req;
-    if (nh.getParam("init_speed/forward/speed", init_speed_req.forward.speed) &&
-        nh.getParam("init_speed/forward/acc", init_speed_req.forward.acc) &&
-        nh.getParam("init_speed/forward/dec", init_speed_req.forward.dec) &&
-        nh.getParam("init_speed/backward/speed", init_speed_req.backward.speed) &&
-        nh.getParam("init_speed/backward/acc", init_speed_req.backward.acc) &&
-        nh.getParam("init_speed/backward/dec", init_speed_req.backward.dec) &&
-        nh.getParam("init_speed/turn/speed", init_speed_req.turn.speed) &&
-        nh.getParam("init_speed/turn/acc", init_speed_req.turn.acc) &&
-        nh.getParam("init_speed/turn/dec", init_speed_req.turn.dec)
-    )
-    {
-        ros_whill::SetSpeedProfile::Response res;
-        ros_srv_set_speed_profile(init_speed_req,res);
-        if(res.success == false){
-            ROS_INFO("Could not set Initial Profile.");
-        }
-    }
-
-    whill->begin(20); // ms
-
     ros::AsyncSpinner spinner(1);
     spinner.start();
-    ros::Rate rate(100);
+
+  
 
     while (ros::ok())
     {
-        whill->refresh();
-        rate.sleep();
+        last_received = ros::Time::now();
+        std::cout << "\n Port Opening." << std::flush;
+
+        while (ros::ok())
+        {
+            try
+            {
+                ser = new serial::Serial(serialport, baud, timeout);
+                break;
+            }
+            catch (...)
+            {
+                delete ser;
+                ser = nullptr;
+                ros::Duration(1.0).sleep();
+                std::cout << "." << std::flush;
+            }
+        }
+        if(!ros::ok())break;
+
+        ROS_INFO("Opened.");
+        ser->flush();
+
+        whill = new WHILL(serialRead, serialWrite);
+        whill->stopSendingData();
+
+        whill->register_callback(whill_callback_data1, WHILL::EVENT::CALLBACK_DATA1);
+        whill->register_callback(whill_callback_powered_on, WHILL::EVENT::CALLBACK_POWER_ON);
+
+        odom.reset();
+        odom.setParameters(whill->wheel_radius, whill->tread);
+
+        // Initial Speed Profile
+        ros_whill::SetSpeedProfile::Request init_speed_req;
+        if (nh.getParam("init_speed/forward/speed", init_speed_req.forward.speed) &&
+            nh.getParam("init_speed/forward/acc", init_speed_req.forward.acc) &&
+            nh.getParam("init_speed/forward/dec", init_speed_req.forward.dec) &&
+            nh.getParam("init_speed/backward/speed", init_speed_req.backward.speed) &&
+            nh.getParam("init_speed/backward/acc", init_speed_req.backward.acc) &&
+            nh.getParam("init_speed/backward/dec", init_speed_req.backward.dec) &&
+            nh.getParam("init_speed/turn/speed", init_speed_req.turn.speed) &&
+            nh.getParam("init_speed/turn/acc", init_speed_req.turn.acc) &&
+            nh.getParam("init_speed/turn/dec", init_speed_req.turn.dec)
+        )
+        {
+            ros_whill::SetSpeedProfile::Response res;
+            ros_srv_set_speed_profile(init_speed_req,res);
+            if(res.success == false){
+                ROS_INFO("Could not set Initial Profile.");
+            }
+        }
+
+
+        whill->begin(20); // ms
+
+        ros::Rate rate(100);
+
+        while (ros::ok())
+        {
+            whill->refresh();
+            rate.sleep();
+            if (abs((last_received - ros::Time::now()).toSec()) > 2.0)
+            {
+                ROS_INFO("Disconnect due to no longer packets received.");
+                ROS_WARN("Check your serial connection to WHILL.");
+                break;
+            }
+        }
+
+        whill->setPower(false);
+        ser->close();
+        delete ser;
+        ser = nullptr;
+        delete whill;
+        whill = nullptr;
     }
 
     spinner.stop();
