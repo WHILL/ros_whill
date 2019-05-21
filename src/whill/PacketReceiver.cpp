@@ -34,7 +34,13 @@ int WHILL::PacketReceiver::push(unsigned char data){
             recording = true;
         }
     }
-        
+
+    if (index > Packet::MAX_LENGTH){
+        // Prevent Buffer Over Run
+        index = 0;
+        recording = false;
+        return -1;
+    }
 
     buf[index] = data;
 
@@ -75,7 +81,10 @@ void WHILL::PacketReceiver::register_callback(PacketParser* obj,int(PacketParser
 bool WHILL::PacketReceiver::call_callback(){
 
     Packet packet;
-    packet.setRaw(buf,index+1);
+
+    if(packet.setRaw(buf,index+1) == false){ // If packet was broken 
+        return false;
+    }
 
 
     if(callback != NULL){

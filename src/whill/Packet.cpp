@@ -51,6 +51,8 @@ bool WHILL::Packet::setRaw(unsigned char* raw,int whole_length){
     protocol_sign = raw[0];
     len           = raw[1];
 
+    if(len >= MAX_LENGTH) return false; // Is not valid
+
     int prefix = 2;
     int i = 0;
     for(i=0;i<len-1;i++){
