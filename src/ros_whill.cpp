@@ -61,6 +61,15 @@ int interval = 0;       // WHILL Data frequency
 bool publish_tf = true; // Enable publishing Odometry TF
 ros::Time last_received;
 
+template <typename T>
+void safeDelete(T *&p)
+{
+    if (p != NULL)
+    {
+        delete (p);
+        (p) = NULL;
+    }
+}
 //
 // ROS Objects
 //
@@ -435,7 +444,7 @@ int main(int argc, char **argv)
             }
             catch (...)
             {
-                delete ser;
+                safeDelete(ser);
                 ser = nullptr;
                 ros::Duration(1.0).sleep();
                 std::cout << "." << std::flush;
@@ -495,10 +504,8 @@ int main(int argc, char **argv)
         }
 
         ser->close();
-        delete ser;
-        ser = nullptr;
-        delete whill;
-        whill = nullptr;
+        safeDelete(ser);
+        safeDelete(whill);
     }
 
     spinner.stop();
