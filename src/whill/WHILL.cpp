@@ -35,9 +35,10 @@ WHILL::WHILL(int (*read)(std::vector<uint8_t> &data), int (*write)(std::vector<u
     receiver.register_callback(&parser,&PacketParser::parsePacket);
 }
 
-void WHILL::begin(unsigned int interval)
+void WHILL::begin(uint8_t interval)
 {
     this->startSendingData1(interval);
+    this->past_time_ms = -1;
 }
 
 void WHILL::transferPacket(Packet* packet){

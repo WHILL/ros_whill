@@ -88,9 +88,9 @@ void WHILL::PacketParser::parseDataset1(Packet* packet){
 
   // Experimental, Set interval comming from Motor Controller
   if (packet->rawLength() == WHILL::Packet::DATASET1_LEN_V02){
-    whill->_interval = 1;
     uint8_t time_ms = packet->payload[29];
-    whill->_interval = WHILL::calc_time_diff(whill->past_time_ms,time_ms);
+    if (whill->past_time_ms < 0)whill->_interval = 0;
+    else whill->_interval = WHILL::calc_time_diff(whill->past_time_ms,time_ms);
     whill->past_time_ms = time_ms;
   }
   else

@@ -206,9 +206,6 @@ int serialRead(std::vector<uint8_t> &data)
     if (ser && ser->isOpen())
     {
         int ret = ser->read(data, 30);
-        if(ret > 0){
-            last_received = ros::Time::now();
-        }
         return ret; // How many bytes read in one time.
     }
     return 0;
@@ -317,7 +314,11 @@ void whill_callback_data1(WHILL *caller)
     else if (caller->_interval >= 0)
     {
         // Experimental
-        odom.update(jointState, caller->_interval / 1000.0f);
+        if(caller->_interval == 0){
+            odom.zeroVelocity();
+        }else{
+            odom.update(jointState, caller->_interval / 1000.0f);
+        }
     }
 
     nav_msgs::Odometry odom_msg = odom.getROSOdometry();
@@ -338,6 +339,8 @@ void whill_callback_data1(WHILL *caller)
             odom_broadcaster->sendTransform(odom_trans);
         }
     }
+
+    last_received = ros::Time::now();
 }
 
 void whill_callback_powered_on(WHILL *caller)
@@ -409,7 +412,7 @@ int main(int argc, char **argv)
     ros::AsyncSpinner spinner(1);
     spinner.start();
 
-  
+
 
     while (ros::ok())
     {
@@ -438,12 +441,13 @@ int main(int argc, char **argv)
 
         whill = new WHILL(serialRead, serialWrite);
         whill->stopSendingData();
+        
+        odom.reset();
+        odom.setParameters(whill->wheel_radius, whill->tread);
 
         whill->register_callback(whill_callback_data1, WHILL::EVENT::CALLBACK_DATA1);
         whill->register_callback(whill_callback_powered_on, WHILL::EVENT::CALLBACK_POWER_ON);
 
-        odom.reset();
-        odom.setParameters(whill->wheel_radius, whill->tread);
 
         // Initial Speed Profile
         ros_whill::SetSpeedProfile::Request init_speed_req;
@@ -482,7 +486,6 @@ int main(int argc, char **argv)
             }
         }
 
-        whill->setPower(false);
         ser->close();
         delete ser;
         ser = nullptr;

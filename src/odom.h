@@ -46,6 +46,7 @@ public:
     Odometry();
     void setParameters(double _wheel_radius, double _wheel_tread);
     void update(sensor_msgs::JointState joint, double dt);
+    void zeroVelocity(void);
     void set(Space2D pose);
     void reset();
 

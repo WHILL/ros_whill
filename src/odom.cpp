@@ -94,6 +94,13 @@ void Odometry::update(sensor_msgs::JointState jointState, double dt)
     return;
 }
 
+void Odometry::zeroVelocity(void){
+    velocity.x = 0;
+    velocity.y = 0;
+    velocity.theta = 0;
+    return;
+}
+
 void Odometry::reset()
 {
     Space2D poseZero = {0, 0, 0};

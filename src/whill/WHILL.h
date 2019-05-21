@@ -111,12 +111,12 @@ private:
     PacketParser parser;
 
     // Experimantal
-    uint8_t past_time_ms = 0;
+    int16_t past_time_ms = -1;  // not received any data yet if negative
     static uint8_t calc_time_diff(uint8_t past, uint8_t current);
 
 public:
     WHILL(int (*read)(std::vector<uint8_t> &data), int (*write)(std::vector<uint8_t> &data));
-    void begin(unsigned int interval);
+    void begin(uint8_t interval);
 
     const float wheel_radius = 0.1325;
     const float tread = 0.496;
