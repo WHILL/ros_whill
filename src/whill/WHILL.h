@@ -85,11 +85,11 @@ class WHILL
         unsigned char index = 0;
         bool recording = false;
 
-        void (*callback)() = NULL;
+        void (*callback)() = nullptr;
         bool call_callback();
 
-        PacketParser *obj = NULL;
-        int (PacketParser::*method)(WHILL::Packet *packet) = NULL;
+        PacketParser *obj = nullptr;
+        int (PacketParser::*method)(WHILL::Packet *packet) = nullptr;
 
     public:
         int push(unsigned char data);
