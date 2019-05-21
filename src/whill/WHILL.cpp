@@ -26,10 +26,11 @@ THE SOFTWARE.
 
 #include <cmath>
 
-WHILL::WHILL(int (*read)(std::vector<uint8_t> &data), int (*write)(std::vector<uint8_t> &data))
+WHILL::WHILL(int (*read)(std::vector<uint8_t> &data), int (*write)(std::vector<uint8_t> &data), void (*sleep)(uint32_t ms))
 {
     this->read = read;   // Register UART read interface pointer
     this->write = write; // Register UART write interface pointer
+    this->sleep_ms = sleep; // Resigster platform-depended sleep function pointer
 
     parser.setParent(this);
     receiver.register_callback(&parser,&PacketParser::parsePacket);

@@ -103,6 +103,7 @@ private:
     // Custom transceiver
     int (*read)(std::vector<uint8_t> &data);  // Returns how many bytes read actually
     int (*write)(std::vector<uint8_t> &data); // Returns how many bytes wrote actually
+    void (*sleep_ms)(uint32_t ms);                      // Sleep function (ms)
 
     void receivePacket();
     void transferPacket(Packet *packet);
@@ -115,7 +116,7 @@ private:
     static uint8_t calc_time_diff(uint8_t past, uint8_t current);
 
 public:
-    WHILL(int (*read)(std::vector<uint8_t> &data), int (*write)(std::vector<uint8_t> &data));
+    WHILL(int (*read)(std::vector<uint8_t> &data), int (*write)(std::vector<uint8_t> &data), void (*sleep)(uint32_t ms));
     void begin(uint8_t interval);
 
     const float wheel_radius = 0.1325;

@@ -27,6 +27,8 @@ SOFTWARE.
 #include <stdint.h>
 #include <vector>
 
+#include "unistd.h"
+
 #include "ros/ros.h"
 #include "sensor_msgs/Joy.h"
 #include "sensor_msgs/JointState.h"
@@ -218,6 +220,11 @@ int serialWrite(std::vector<uint8_t> &data)
         return ser->write(data);
     }
     return 0;
+}
+
+void sleep_ms(uint32_t ms){
+    usleep(ms * 1000);
+    return;
 }
 
 //
@@ -439,9 +446,10 @@ int main(int argc, char **argv)
         ROS_INFO("Opened.");
         ser->flush();
 
-        whill = new WHILL(serialRead, serialWrite);
+        whill = new WHILL(serialRead, serialWrite, sleep_ms);
+        whill->setPower(true);
         whill->stopSendingData();
-        
+
         odom.reset();
         odom.setParameters(whill->wheel_radius, whill->tread);
 
