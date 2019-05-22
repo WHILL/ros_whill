@@ -126,7 +126,7 @@ bool ros_srv_set_power(std_srvs::SetBool::Request &req,std_srvs::SetBool::Respon
         return true;
     }
 
-    whill->setPower(false);
+    whill->setPower(req.data);
     res.success = true;
     return true;
 }
@@ -429,6 +429,9 @@ int main(int argc, char **argv)
     bool experimental_topics;
     nh.param<bool>("experimental_topics", experimental_topics, false);
 
+    bool keep_connected;
+    nh.param<bool>("keep_connected", keep_connected, false);
+
     ros::Subscriber cmd_vel_subscriber;
     if (experimental_topics == true)
     {
@@ -509,7 +512,7 @@ int main(int argc, char **argv)
         {
             whill->refresh();
             rate.sleep();
-            if (abs((last_received - ros::Time::now()).toSec()) > 2.0)
+            if (keep_connected && (abs((last_received - ros::Time::now()).toSec()) > 2.0))
             {
                 ROS_INFO("Disconnect due to no longer packets received.");
                 ROS_WARN("Check your serial connection to WHILL.");
