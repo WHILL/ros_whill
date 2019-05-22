@@ -519,7 +519,7 @@ int main(int argc, char **argv)
                 break;
             }
         }
-        whill->setPower(false);
+
         ser->close();
         safeDelete(ser);
         safeDelete(whill);
