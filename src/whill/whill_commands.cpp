@@ -62,8 +62,10 @@ void WHILL::setPower(bool power){
                                (unsigned char)(power ? 0x01 : 0x00)};
     Packet packet(payload,sizeof(payload));
     packet.build();
-    write(nop);
-    sleep_ms(5);
+    if(power){
+        write(nop);
+        sleep_ms(5);
+    }
     transferPacket(&packet);
 }
 
