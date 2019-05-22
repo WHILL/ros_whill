@@ -36,6 +36,7 @@ SOFTWARE.
 #include "sensor_msgs/BatteryState.h"
 #include "nav_msgs/Odometry.h"
 
+#include "std_srvs/SetBool.h"
 #include "std_srvs/Empty.h"
 
 #include "ros_whill/SpeedPack.h"
@@ -115,6 +116,19 @@ void ros_cmd_vel_callback(const geometry_msgs::Twist::ConstPtr &cmd_vel)
     {
         whill->setSpeed(cmd_vel->linear.x, cmd_vel->angular.z);
     }
+}
+
+bool ros_srv_set_power(std_srvs::SetBool::Request &req,std_srvs::SetBool::Response &res){
+    if (whill == nullptr)
+    {
+        res.success = false;
+        res.message = "whill instance is not initialzied.";
+        return true;
+    }
+
+    whill->setPower(false);
+    res.success = true;
+    return true;
 }
 
 bool ros_srv_odom_clear_callback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res)
@@ -378,10 +392,11 @@ int main(int argc, char **argv)
     //set_power_service_service = nh.advertiseService("power/on", set_power_service_callback);
     ros::ServiceServer clear_odom_service = nh.advertiseService("odom/clear", &ros_srv_odom_clear_callback);
     ros::ServiceServer set_speed_profile_service = nh.advertiseService("speedProfile/set", &ros_srv_set_speed_profile);
+    ros::ServiceServer set_power_service = nh.advertiseService("power", &ros_srv_set_power);
 
     // Subscriber
     ros::Subscriber joystick_subscriber = nh.subscribe("controller/joy", 100, ros_joystick_callback);
-    
+
     // Publishers
     ros_joystick_state_publisher = nh.advertise<sensor_msgs::Joy>("states/joy", 100);
     ros_jointstate_publisher = nh.advertise<sensor_msgs::JointState>("states/jointState", 100);
@@ -486,7 +501,6 @@ int main(int argc, char **argv)
             }
         }
 
-
         whill->begin(20); // ms
 
         ros::Rate rate(100);
@@ -502,7 +516,7 @@ int main(int argc, char **argv)
                 break;
             }
         }
-
+        whill->setPower(false);
         ser->close();
         safeDelete(ser);
         safeDelete(whill);
