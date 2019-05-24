@@ -5,48 +5,77 @@ For general questions and requests, please visit https://whill.zendesk.com/hc/ja
 
 <img src="https://user-images.githubusercontent.com/2618822/45492944-89421c00-b7a8-11e8-9c92-22aa3f28f6e4.png" width=30%>
 
+## Requirements
+- ROS Melodic
+
 ## ROS API
 
 ### Subscribed Topics
 
-#### /whill/controller/joy [(sensor_msgs/Joy)](http://docs.ros.org/api/sensor_msgs/html/msg/Joy.html)
+#### ~controller/joy [(sensor_msgs/Joy)](http://docs.ros.org/api/sensor_msgs/html/msg/Joy.html)
 - Virtual WHILL joystick input. You can controll WHILL via this topic.
 
 
 ### Published Topics
 
-#### /whill/states/joy [(sensor_msgs/Joy)](http://docs.ros.org/api/sensor_msgs/html/msg/Joy.html)
+#### ~states/joy [(sensor_msgs/Joy)](http://docs.ros.org/api/sensor_msgs/html/msg/Joy.html)
 - Joystick status
 
-#### /whill/states/jointState [(sensor_msgs/JointState)](http://docs.ros.org/api/sensor_msgs/html/msg/JointState.html)
+#### ~states/jointState [(sensor_msgs/JointState)](http://docs.ros.org/api/sensor_msgs/html/msg/JointState.html)
 - Wheel rotate position(rad) and rotation velocity(rad/s)
 
-#### /whill/states/imu [(sensor_msgs/Imu)](http://docs.ros.org/api/sensor_msgs/html/msg/Imu.html)
+#### ~states/imu [(sensor_msgs/Imu)](http://docs.ros.org/api/sensor_msgs/html/msg/Imu.html)
 - IMU measured data.
 
-#### /whill/states/batteryState [(sensor_msgs/BatteryState)](http://docs.ros.org/api/sensor_msgs/html/msg/BatteryState.html)
+#### ~states/batteryState [(sensor_msgs/BatteryState)](http://docs.ros.org/api/sensor_msgs/html/msg/BatteryState.html)
 - Battery information
 
 
-## Requirements
-- Ubuntu 16.04
-- ROS kinetic
+### Services
 
-## Build
-In your shell:
-```sh
-cd ~/catkin_ws
-catkin_make
-rospack profile
+#### ~odom/clear [std_srvs/Empty]
+Clear Odometry
+
+#### ~power [std_srvs/SetBool]
+True to send power on command, false to power off.
+
+#### ~speedProfile/set [ros_whill/SetSpeedProfile]
+You can set WHILL speed profile for `~controller/joy` topic.
 ```
-ros_whill package is sometimes not recognized if you not set "rospack profile". (After executed "rosrun ros_whill", you might see the error message "not found package".)
+ros_whill/SpeedPack forward
+  float32 speed  # m/s
+  float32 acc    # m/ss
+  float32 dec    # m/ss
+ros_whill/SpeedPack backward
+  float32 speed  # m/s
+  float32 acc    # m/ss
+  float32 dec    # m/ss
+ros_whill/SpeedPack turn
+  float32 speed  # rad/s
+  float32 acc    # rad/ss
+  float32 dec    # rad/ss
+---
+bool success
+string status_message
 
-### Build only ros_whill package
-```sh
-catkin_make -DCATKIN_WHITELIST_PACKAGES="ros_whill"
 ```
 
-## SerialPort Settings
+### Parameters
+
+### ~init_speed/*
+See: 
+
+### ~keep_connected (Bool, default:false)
+Set true to try to keep connected by re-opening port and sending power-on command. Though the WHILL automticarry wakes up even you turn off manualy or by power-off command.
+
+### ~publish_tf (Bool, defualt: true)
+False to stop publishing `odom` to `base_link` tf. If other node publishs, set value to false.
+
+### ~serialport (String, default:/dev/ttyUSB0)
+
+
+## SerialPort Setting for ros_whill.launch
+The `ros_whill.launch` is using environmental variable `TTY_WHILL` for specify which serial port to be used.
 
 ### Set
 
@@ -76,17 +105,6 @@ source ~/.zshrc
 echo $TTY_WHILL  # -> Should be /dev/[YOUR SERIAL PORT DEVICE]
 ```
 
-## Launch
-```sh
-roslaunch ros_whill modelc.launch
-```
-
-### Set serial port as an argument of the launch file
-```sh
-roslaunch ros_whill modelc.launch serialport:=/dev/[YOUR SERIAL PORT DEVICE]
-```
-
-
 ### In the case of opening serial port failed
 
 Edit
@@ -99,7 +117,13 @@ And add:
 KERNEL=="ttyUSB[0-9]*", MODE="0666"
 ```
 
-## Change Speed Profile
+
+## Launch with Model
 ```sh
-rosservice call /set_speed_profile {4, 15, 16, 64, 10, 16, 56, 10, 56, 72}
+$ roslaunch ros_whill ros_whill.launch
+```
+
+### Set serial port as an argument of the launch file
+```sh
+roslaunch ros_whill ros_whill.launch serialport:=/dev/[YOUR SERIAL PORT DEVICE]
 ```
