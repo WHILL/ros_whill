@@ -18,9 +18,9 @@ find_package(catkin REQUIRED COMPONENTS
 
 include(FindPkgConfig)
 pkg_check_modules(libwhill libwhill)
-#message(STATUS "libwhill_INCLUDE_DIRS=${libwhill_INCLUDE_DIRS}")
-#message(STATUS "libwhill_LIBRARY_DIRS=${libwhill_LIBRARY_DIRS}")
-#message(STATUS "libwhill_LIBRARIES=${libwhill_LIBRARIES}")
+message(STATUS "libwhill_INCLUDE_DIRS=${libwhill_INCLUDE_DIRS}")
+message(STATUS "libwhill_LIBRARY_DIRS=${libwhill_LIBRARY_DIRS}")
+message(STATUS "libwhill_LIBRARIES=${libwhill_LIBRARIES}")
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
