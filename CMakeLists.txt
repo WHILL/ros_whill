@@ -19,8 +19,13 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
-
-add_subdirectory(./src/whill) 
+# ros_whill dependents on libwhill (cross-platform SDK)
+include(FindPkgConfig)
+pkg_check_modules(libwhill libwhill)
+message(STATUS "libwhill_INCLUDE_DIRS=${libwhill_INCLUDE_DIRS}")
+message(STATUS "libwhill_LIBRARY_DIRS=${libwhill_LIBRARY_DIRS}")
+message(STATUS "libwhill_LIBRARIES=${libwhill_LIBRARIES}")
+ 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -122,6 +127,7 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  ${libwhill_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -156,8 +162,8 @@ add_dependencies(ros_whill ${PROJECT_NAME}_generate_messages_cpp ${${PROJECT_NAM
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(ros_whill
-  lib_whill
   ${catkin_LIBRARIES}
+  ${libwhill_LIBRARIES}
  )
 
 #target_link_libraries(ros_whill ${catkin_LIBRARIES})

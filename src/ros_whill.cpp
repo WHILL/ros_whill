@@ -44,7 +44,7 @@ SOFTWARE.
 
 #include "tf/transform_broadcaster.h"
 
-#include "whill/WHILL.h"
+#include "libwhill/WHILL.h"
 #include "serial/serial.h" // wjwood/Serial (ros-melodic-serial)
 
 #include "utils/rotation_tools.h"
