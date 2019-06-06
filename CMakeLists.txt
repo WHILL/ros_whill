@@ -13,19 +13,20 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   tf
-  serial
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
 # ros_whill dependents on libwhill (cross-platform SDK)
-include(FindPkgConfig)
-pkg_check_modules(libwhill libwhill)
+find_package(libwhill REQUIRED)
+find_package(serial REQUIRED)
 message(STATUS "libwhill_INCLUDE_DIRS=${libwhill_INCLUDE_DIRS}")
 message(STATUS "libwhill_LIBRARY_DIRS=${libwhill_LIBRARY_DIRS}")
 message(STATUS "libwhill_LIBRARIES=${libwhill_LIBRARIES}")
- 
+message(STATUS "serial_INCLUDE_DIRS=${serial_INCLUDE_DIRS}")
+message(STATUS "serial_LIBRARY_DIRS=${serial_LIBRARY_DIRS}")
+message(STATUS "serial_LIBRARIES=${serial_LIBRARIES}")
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -128,6 +129,7 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
   ${libwhill_INCLUDE_DIRS}
+  ${serial_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -164,6 +166,7 @@ add_dependencies(ros_whill ${PROJECT_NAME}_generate_messages_cpp ${${PROJECT_NAM
 target_link_libraries(ros_whill
   ${catkin_LIBRARIES}
   ${libwhill_LIBRARIES}
+  ${serial_LIBRARIES}
  )
 
 #target_link_libraries(ros_whill ${catkin_LIBRARIES})
