@@ -122,8 +122,6 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
-  ${libwhill_INCLUDE_DIRS}
-  ${serial_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -161,8 +159,6 @@ target_link_libraries(ros_whill
   whill
   serial
   ${catkin_LIBRARIES}
-  ${libwhill_LIBRARIES}
-  ${serial_LIBRARIES}
  )
 
 #target_link_libraries(ros_whill ${catkin_LIBRARIES})
