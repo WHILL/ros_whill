@@ -63,7 +63,7 @@ string status_message
 ### Parameters
 
 ### ~init_speed/*
-See: 
+See: https://github.com/WHILL/ros_whill/blob/melodic-devel/params/initial_speedprofile.yaml
 
 ### ~keep_connected (Bool, default:false)
 Set true to try to keep connected by re-opening port and sending power-on command. Though the WHILL automticarry wakes up even you turn off manualy or by power-off command.
