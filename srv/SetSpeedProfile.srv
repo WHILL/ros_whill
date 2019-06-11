@@ -1,0 +1,7 @@
+ros_whill/SpeedPack forward      # m/s(Speed) and m/ss(Acceleration/Deceleration)
+ros_whill/SpeedPack backward     # m/s(Speed) and m/ss(Acceleration/Deceleration)
+ros_whill/SpeedPack turn         # rad/s(Speed) and rad/ss(Acceleration/Deceleration)
+
+---
+bool success
+string status_message

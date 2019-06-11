@@ -1,18 +1,14 @@
 /*
 MIT License
-
-Copyright (c) 2018 WHILL inc.
-
+Copyright (c) 2018-2019 WHILL inc.
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
-
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
-
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -45,40 +41,45 @@ SOFTWARE.
 #include <math.h>
 #include <limits>
 
-
 const float base_link_height = 0.1325;
 
-
-Odometry::Odometry(){
+Odometry::Odometry()
+{
     pose.x = pose.y = pose.theta = 0.0;
     velocity.x = velocity.y = velocity.theta = 0.0;
 }
 
-
-long double Odometry::confineRadian(long double rad){
-    if(rad >= M_PI){
+long double Odometry::confineRadian(long double rad)
+{
+    if (rad >= M_PI)
+    {
         rad -= 2.0 * M_PI;
     }
-    if(rad <= -M_PI){
+    if (rad <= -M_PI)
+    {
         rad += 2.0 * M_PI;
     }
     return rad;
 }
 
+void Odometry::setParameters(double _wheel_radius, double _wheel_tread){
+    this->wheel_radius = _wheel_radius;
+    this->wheel_tread = _wheel_tread;
+}
 
-void Odometry::update(sensor_msgs::JointState jointState,double dt)
+void Odometry::update(sensor_msgs::JointState jointState, double dt)
 {
-    if(dt == 0)return;
+    if (dt == 0)
+        return;
 
     double angle_vel_r = jointState.velocity[1];
     double angle_vel_l = -jointState.velocity[0];
 
-    long double vr = angle_vel_r * wheel_radius_;
-    long double vl = angle_vel_l * wheel_radius_;
+    long double vr = angle_vel_r * wheel_radius;
+    long double vl = angle_vel_l * wheel_radius;
 
-    long double delta_L  = (vr + vl) / 2.0;
-    long double delta_theta = (vr - vl) / (2.0 * wheel_tread_);
-
+    long double delta_L = (vr + vl) / 2.0;
+    long double delta_theta = (vr - vl) / (wheel_tread);
 
     pose.x += delta_L * dt * cosl(pose.theta + delta_theta * dt / 2.0);
     pose.y += delta_L * dt * sinl(pose.theta + delta_theta * dt / 2.0);
@@ -93,22 +94,32 @@ void Odometry::update(sensor_msgs::JointState jointState,double dt)
     return;
 }
 
+void Odometry::zeroVelocity(void){
+    velocity.x = 0;
+    velocity.y = 0;
+    velocity.theta = 0;
+    return;
+}
 
-void Odometry::reset(){
-    Space2D poseZero = {0,0,0};
+void Odometry::reset()
+{
+    Space2D poseZero = {0, 0, 0};
     set(poseZero);
     velocity = poseZero;
 }
 
-void Odometry::set(Space2D pose){
+void Odometry::set(Space2D pose)
+{
     this->pose = pose;
 }
 
-Odometry::Space2D Odometry::getOdom(){
+Odometry::Space2D Odometry::getOdom()
+{
     return pose;
 }
 
-nav_msgs::Odometry Odometry::getROSOdometry(){
+nav_msgs::Odometry Odometry::getROSOdometry()
+{
     nav_msgs::Odometry odom;
 
     geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromRollPitchYaw(0, 0, pose.theta);
@@ -130,9 +141,8 @@ nav_msgs::Odometry Odometry::getROSOdometry(){
     return odom;
 }
 
-
-
-geometry_msgs::TransformStamped Odometry::getROSTransformStamped(){
+geometry_msgs::TransformStamped Odometry::getROSTransformStamped()
+{
 
     geometry_msgs::TransformStamped odom_trans;
 
@@ -143,5 +153,5 @@ geometry_msgs::TransformStamped Odometry::getROSTransformStamped(){
     odom_trans.transform.translation.z = base_link_height;
     odom_trans.transform.rotation = tf::createQuaternionMsgFromYaw(pose.theta);
 
-    return  odom_trans;
+    return odom_trans;
 }

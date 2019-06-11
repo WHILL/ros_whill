@@ -13,11 +13,14 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   tf
+  serial
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+
+add_subdirectory(./src/whill) 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -51,16 +54,13 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
  add_message_files(
    FILES
-   msgWhillModelC.msg
-   msgWhillSpeedProfile.msg
- )
+   SpeedPack.msg
+  )
 
 ## Generate services in the 'srv' folder
  add_service_files(
    FILES
-   srvSetSpeedProfile.srv
-   srvSetPower.srv
-   srvSetBatteryVoltageOut.srv
+   SetSpeedProfile.srv
  )
 
 ## Generate actions in the 'action' folder
@@ -74,6 +74,7 @@ find_package(catkin REQUIRED COMPONENTS
  generate_messages(
    DEPENDENCIES
    std_msgs
+   ros_whill
  )
 
 ################################################
@@ -137,8 +138,8 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/ros_whill_node.cpp)
-add_executable(whill_modelc_publisher src/whill_modelc_publisher.cpp src/whill_modelc/uart.cpp src/whill_modelc/com_whill.cpp src/odom.cpp)
-add_executable(whill_modelc_controller src/whill_modelc_controller.cpp src/whill_modelc/uart.cpp src/whill_modelc/com_whill.cpp)
+add_executable(ros_whill src/ros_whill.cpp src/odom.cpp src/utils/rotation_tools.cpp src/utils/unit_convert.cpp)
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -149,15 +150,17 @@ add_executable(whill_modelc_controller src/whill_modelc_controller.cpp src/whill
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(whill_modelc_publisher ${PROJECT_NAME}_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(whill_modelc_controller ${PROJECT_NAME}_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(whill_modelc_publisher ${PROJECT_NAME}_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(whill_modelc_controller ${PROJECT_NAME}_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(ros_whill ${PROJECT_NAME}_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
-target_link_libraries(whill_modelc_publisher ${catkin_LIBRARIES})
-target_link_libraries(whill_modelc_controller ${catkin_LIBRARIES})
+target_link_libraries(ros_whill
+  lib_whill
+  ${catkin_LIBRARIES}
+ )
+
+#target_link_libraries(ros_whill ${catkin_LIBRARIES})
 
 #############
 ## Install ##

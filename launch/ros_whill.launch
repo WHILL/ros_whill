@@ -1,0 +1,32 @@
+<launch>
+    <arg name="model" default="$(find ros_whill)/xacro/modelc.xacro" />
+    <arg name="gui" default="true" />
+
+    <param name="robot_description" command="$(find xacro)/xacro $(arg model)"/>
+  
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+        <remap from="/joint_states" to="/whill/states/jointState" />
+    </node>
+
+    <arg name="serialport" default="$(env TTY_WHILL)"/>
+
+    <node pkg="ros_whill" type="ros_whill" name="whill" output="screen" >
+
+        <!-- Initial Speed Profile -->
+        <rosparam file="$(find ros_whill)/params/initial_speedprofile.yaml" command="load" />
+
+        <!-- Keep Connected: If you specify true,ros_whill try to keep connection by re-opening port and sending power on command.
+             If you'd like to turn WHILL off by command or manually while using ros_whill, set value to false. 
+             Otherwise WHILL automatically turns on.
+         -->
+        <param name="keep_connected" value="true" />
+
+        <!-- Serial Device name -->
+        <param name="serialport" value="$(arg serialport)"/>
+
+        <!-- Output Odometry tf or not. If other node publishes odom->base_link tf, Change value to "false" -->
+        <param name="publish_tf" value="true"/>  
+        
+    </node>
+</launch>
+

@@ -1,14 +1,18 @@
 /*
 MIT License
-Copyright (c) 2018-2019 WHILL inc.
+
+Copyright (c) 2019 WHILL inc.
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
+
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -18,39 +22,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#pragma once
+/* Author: Hikaru Sugiura */
 
-#include "sensor_msgs/JointState.h"
-#include "nav_msgs/Odometry.h"
-#include "geometry_msgs/TransformStamped.h"
+#include <stdint.h>
 
-class Odometry
-{
-private:
-    long double confineRadian(long double rad);
+uint8_t convert_mps_to_whill_speed(float mps)
+{ // m/s to whill speed
+    float km_p_h = mps * 3.6; // m/s to km/h
+    return km_p_h * 10; // WHILL 60 means 6.0 km/h 
+}
 
-    typedef struct
-    {
-        long double x;
-        long double y;
-        long double theta;
-    } Space2D;
+uint8_t convert_mpss_to_whill_acc(float mpss)
+{ // m/ss to whill speed
+    double kmh_p_s = mpss * 3.6; // m/ss to km/h/s
+    return kmh_p_s  /(0.4 * (32.0f / 256.0f));
+}
 
-    double wheel_radius;
-    double wheel_tread;
-
-    Space2D pose;
-    Space2D velocity;
-
-public:
-    Odometry();
-    void setParameters(double _wheel_radius, double _wheel_tread);
-    void update(sensor_msgs::JointState joint, double dt);
-    void zeroVelocity(void);
-    void set(Space2D pose);
-    void reset();
-
-    nav_msgs::Odometry getROSOdometry();
-    geometry_msgs::TransformStamped getROSTransformStamped();
-    Space2D getOdom();
-};
+uint8_t convert_radps_to_whill_speed(float tread, float radps){
+    double mps = radps * tread / 2 * 2.0f;  // Half Tread * Turning Fix, Wheel Speed will be Max/2 in spin turning.
+    return convert_mps_to_whill_speed(mps);
+}
+uint8_t convert_radpss_to_whill_acc(float tread, float radpss){
+    double mpss = radpss * tread / 2 * 2.0f; // Half Tread * Turning Fix
+    return convert_mpss_to_whill_acc(mpss);
+}

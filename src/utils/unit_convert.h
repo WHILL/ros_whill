@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2018 WHILL inc.
+Copyright (c) 2019 WHILL inc.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,16 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/*
- * Functions to use UART
- * author : Kazumichi Shirai
- */
+/* Author: Hikaru Sugiura */
 
-#include <string> 
+#pragma once
 
-#define PROTOCOL_SIGN (0xAF)
+#include <stdint.h>
 
-int sendCmdUART(int fd, char cmd[], int len);
-int recvDataUART(int fd, unsigned char recv_buf[]);
-int initializeUART(int *fd,std::string port);
-void closeUART(int fd);
+uint8_t convert_mps_to_whill_speed(float);
+uint8_t convert_mpss_to_whill_acc(float);
+
+uint8_t convert_radps_to_whill_speed(float tread,float radps);
+uint8_t convert_radpss_to_whill_acc(float tread, float radpss);
