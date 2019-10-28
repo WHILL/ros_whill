@@ -45,11 +45,11 @@ WHILL::SpeedProfile::Error WHILL::SpeedProfile::check()
     if (!checkRange(40, this->forward.dec, 160))
         return InvalidForwardDec;
 
-    if (!checkRange(8, this->forward.speed, 30))
+    if (!checkRange(8, this->backward.speed, 30))
         return InvalidBackwardSpeed;
-    if (!checkRange(10, this->forward.acc, 50))
+    if (!checkRange(10, this->backward.acc, 50))
         return InvalidBackwardAcc;
-    if (!checkRange(40, this->forward.dec, 90))
+    if (!checkRange(40, this->backward.dec, 90))
         return InvalidBackwardDec;
 
     if (!checkRange(8, this->turn.speed, 35))
