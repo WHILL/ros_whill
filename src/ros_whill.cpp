@@ -203,6 +203,7 @@ bool ros_srv_set_speed_profile(ros_whill::SetSpeedProfile::Request &req, ros_whi
 
     if (!is_valid)
     {
+        ROS_WARN("SpeedProfile Service has been called with invalid speed profile parameters.");
         res.success = false;
         return true;
     }
