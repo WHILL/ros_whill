@@ -1,5 +1,5 @@
 /*
-The MIT License (MIT)
+The MIT Lice"nse (MIT)
 
 Copyright (c) 2018-2019 WHILL,
 
@@ -38,10 +38,10 @@ void WHILL::startSendingData0(unsigned int interval_ms,unsigned char speed_mode)
 
 void WHILL::startSendingData1(unsigned int interval_ms){
     unsigned char payload[] =  {0x00,   //Start Sending Data
-                                0x01,   //Data1  (Sensors)
-                                (unsigned char)(interval_ms<<8 & 0xFF),
-                                (unsigned char)(interval_ms<<0 & 0xFF),
-                                0x00};
+                               0x01,   //Data1  (Sensors)
+                               (unsigned char)(interval_ms<<8 & 0xFF),
+                               (unsigned char)(interval_ms<<0 & 0xFF),
+                               0x00};
     Packet packet(payload,sizeof(payload));
     packet.build();
     transferPacket(&packet);
@@ -56,7 +56,7 @@ void WHILL::stopSendingData(){
 
 void WHILL::setPower(bool power){
 
-    std::vector<uint8_t> nop = {0x55, 0x55, 0x55, 0x55, 0x55, 0x55};
+    std::vector<uint8_t> nop = {0x55};
 
     unsigned char payload[] = {0x02,
                                (unsigned char)(power ? 0x01 : 0x00)};
@@ -64,7 +64,7 @@ void WHILL::setPower(bool power){
     packet.build();
     if(power){
         write(nop);
-        sleep_ms(5);
+        sleep_ms(10);
     }
     transferPacket(&packet);
 }

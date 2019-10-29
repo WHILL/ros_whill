@@ -476,7 +476,9 @@ int main(int argc, char **argv)
 
         whill = new WHILL(serialRead, serialWrite, sleep_ms);
         whill->setPower(true);
+        sleep_ms(100);
         whill->stopSendingData();
+        sleep_ms(100);
 
         odom.reset();
         odom.setParameters(whill->wheel_radius, whill->tread);
@@ -504,8 +506,10 @@ int main(int argc, char **argv)
                 ROS_INFO("Could not set Initial Profile.");
             }
         }
+        sleep_ms(100);
 
         whill->begin(20); // ms
+        sleep_ms(100);
 
         ros::Rate rate(100);
 
