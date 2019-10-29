@@ -229,19 +229,33 @@ serial::Serial *ser = nullptr;
 
 int serialRead(std::vector<uint8_t> &data)
 {
-    if (ser && ser->isOpen())
-    {
-        int ret = ser->read(data, 30);
-        return ret; // How many bytes read in one time.
+    try{
+        if (ser && ser->isOpen())
+        {
+            int ret = ser->read(data, 30);
+            return ret; // How many bytes read in one time.
+        }
+    }catch(...){
+        if(ser){
+            ser->close();
+            ROS_WARN("Port closed due to exception.");
+        }
     }
     return 0;
 }
 
 int serialWrite(std::vector<uint8_t> &data)
 {
-    if (ser && ser->isOpen())
-    {
-        return ser->write(data);
+    try{
+        if (ser && ser->isOpen())
+        {
+            return ser->write(data);
+        }
+    }catch(...){
+        if(ser){
+            ser->close();
+            ROS_WARN("Port closed due to exception.");
+        }
     }
     return 0;
 }
