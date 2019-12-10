@@ -519,6 +519,7 @@ int main(int argc, char **argv)
             }
         }
 
+        sleep_ms(10);
         whill->begin(20); // ms
 
         ros::Rate rate(100);
