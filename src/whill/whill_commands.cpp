@@ -56,15 +56,13 @@ void WHILL::stopSendingData(){
 
 void WHILL::setPower(bool power){
 
-    std::vector<uint8_t> nop = {0x55, 0x55, 0x55, 0x55, 0x55, 0x55};
-
     unsigned char payload[] = {0x02,
                                (unsigned char)(power ? 0x01 : 0x00)};
     Packet packet(payload,sizeof(payload));
     packet.build();
     if(power){
-        write(nop);
-        sleep_ms(5);
+        transferPacket(&packet);
+        sleep_ms(10);
     }
     transferPacket(&packet);
 }
