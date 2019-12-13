@@ -114,37 +114,23 @@ void WHILL::setBatteryVoltaegeOut(bool enable){
 // Experimental, Speed control without Jerk control but only Acceleration cotnrol.
 void WHILL::setSpeed(float linear,  float angular)
 {
-    int x, y;
+    int16_t x, y = 0; // Unit: 0.004km/h
 
-    const float front_max = 6.0;     // [km/h]
-    const float spin_max = 3.5;      // [km/h]
-    const float back_max = 2.0;      // [km/h]
+    // Linear
+    y = (linear * 3.6f) / 0.004f;
+
+    // angular
     const float tread_width = 0.248; // [m]
+    float v = tread_width * angular;  // V=rω [m/s]
+    x = -v * 3.6f / 0.004f * 2.0f; // [m/s] to [km/h]→ 0.004km/h unit, Double for differencial
 
-    float desire_front_kmh = linear * 3.6;                    // [m/s]   to [km/h]
-    float desire_spin_spd = -tread_width * angular * 3.6 * 2; // [rad/s] to [km/h]
-
-    if (linear >= 0)
-    {
-        //forward
-        y = desire_front_kmh / front_max * 100;
-        y = y > 100 ? 100 : y;
-    }
-    else
-    {
-        //back
-        y = desire_front_kmh / back_max * 100;
-        y = y < -100 ? -100 : y;
-    }
-
-    x = desire_spin_spd / spin_max * 100;
-    x = x > 100 ? 100 : x;
-    x = x < -100 ? -100 : x;
-
-    unsigned char payload[] = {0x08, // Experimental Command, Control with Low Jerk, Almost Const-Accel control
-                               0x00, 
-                               (unsigned char)(char)(y),
-                               (unsigned char)(char)(x)};
+    unsigned char payload[] = {
+        0x08, // Experimental Command, Control with Low Jerk, Almost Const-Accel control
+        0,    // 0=Disable Joystick 1=Allow Joystick
+        (uint8_t)((y >> 8) & 0xff),
+        (uint8_t)((y >> 0) & 0xff),
+        (uint8_t)((x >> 8) & 0xff),
+        (uint8_t)((x >> 0) & 0xff)};
     Packet packet(payload, sizeof(payload));
     packet.build();
     transferPacket(&packet);
