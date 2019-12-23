@@ -277,7 +277,6 @@ void activate_cmd_vel_topic(ros::NodeHandle &nh)
     static bool activated = false;
     if (!activated && enable_cmd_vel_topic)
     {
-        printf("dd");
         cmd_vel_subscriber = nh.subscribe("controller/cmd_vel", 100, ros_cmd_vel_callback);
         activated = true;
     }

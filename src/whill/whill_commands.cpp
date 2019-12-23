@@ -114,7 +114,7 @@ void WHILL::setBatteryVoltaegeOut(bool enable){
 // Experimental, Speed control without Jerk control but only Acceleration cotnrol.
 void WHILL::setSpeed(float linear,  float angular)
 {
-    int16_t x, y = 0; // Unit: 0.004km/h
+    int16_t x = 0, y = 0; // Unit: 0.004km/h
 
     // Linear
     y = (linear * 3.6f) / 0.004f;
