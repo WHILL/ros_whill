@@ -268,6 +268,20 @@ void sleep_ms(uint32_t ms){
 //
 // WHILL
 //
+
+// Enable cmd_vel Topic
+bool enable_cmd_vel_topic = false;
+ros::Subscriber cmd_vel_subscriber;
+void activate_cmd_vel_topic(ros::NodeHandle &nh)
+{
+    static bool activated = false;
+    if (!activated && enable_cmd_vel_topic)
+    {
+        cmd_vel_subscriber = nh.subscribe("controller/cmd_vel", 100, ros_cmd_vel_callback);
+        activated = true;
+    }
+}
+
 void whill_callback_data1(WHILL *caller)
 {
 
@@ -358,6 +372,7 @@ void whill_callback_data1(WHILL *caller)
     }
     else if (caller->_interval >= 0)
     {
+        enable_cmd_vel_topic = true;
         // Experimental
         if(caller->_interval == 0){
             odom.zeroVelocity();
@@ -440,19 +455,9 @@ int main(int argc, char **argv)
     // Disable publishing odometry tf
     nh.param<bool>("publish_tf", publish_tf, true);
 
-    // Enable Experimantal Topics
-    bool experimental_topics;
-    nh.param<bool>("experimental_topics", experimental_topics, false);
 
     bool keep_connected;
     nh.param<bool>("keep_connected", keep_connected, false);
-
-    ros::Subscriber cmd_vel_subscriber;
-    if (experimental_topics == true)
-    {
-        ROS_INFO("Experimental topics activated");
-        cmd_vel_subscriber = nh.subscribe("controller/cmd_vel", 100, ros_cmd_vel_callback);
-    }
 
     unsigned long baud = 38400;
     serial::Timeout timeout = serial::Timeout::simpleTimeout(0);
@@ -527,6 +532,7 @@ int main(int argc, char **argv)
         while (ros::ok())
         {
             whill->refresh();
+            activate_cmd_vel_topic(nh);
             rate.sleep();
             if (keep_connected && (abs((last_received - ros::Time::now()).toSec()) > 2.0))
             {

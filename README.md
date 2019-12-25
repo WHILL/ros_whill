@@ -15,6 +15,9 @@ For general questions and requests, please visit https://whill.zendesk.com/hc/ja
 #### ~controller/joy [(sensor_msgs/Joy)](http://docs.ros.org/api/sensor_msgs/html/msg/Joy.html)
 - Virtual WHILL joystick input. You can controll WHILL via this topic.
 
+#### ~controller/cmd_vel [(geometry_msgs/Twist)](http://docs.ros.org/api/geometry_msgs/html/msg/Twist.html)
+- cmc_vel input. You can controll WHILL via this topic.
+- This command is only available Model CR firmware updatedd after 2019.12. If you want to use this cmd_vel, please update firmware of Model CR by contact to sales of WHILL.
 
 ### Published Topics
 
