@@ -160,7 +160,7 @@ bool ros_srv_set_speed_profile(ros_whill::SetSpeedProfile::Request &req, ros_whi
     profile.turn.acc = convert_radpss_to_whill_acc(whill->tread, req.turn.acc);
     profile.turn.dec = convert_radpss_to_whill_acc(whill->tread, req.turn.dec);
 
-    ROS_INFO("Setting Spped Profile");
+    ROS_INFO("Setting Speed Profile");
     ROS_INFO("Forward\tSpeed:%d,Acc:%d,Dec:%d", profile.forward.speed, profile.forward.acc, profile.forward.dec);
     ROS_INFO("Bacward\tSpeed:%d,Acc:%d,Dec:%d", profile.backward.speed, profile.backward.acc, profile.backward.dec);
     ROS_INFO("Turn\tSpeed:%d,Acc:%d,Dec:%d\n", profile.turn.speed, profile.turn.acc, profile.turn.dec);
