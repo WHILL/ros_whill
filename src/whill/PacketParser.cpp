@@ -63,14 +63,6 @@ void WHILL::PacketParser::parseDataset0(Packet* packet){
 }
 
 void WHILL::PacketParser::parseDataset1(Packet* packet){
-  whill->accelerometer.x = (signed short)((packet->payload[1] << 8)+(packet->payload[2]));
-  whill->accelerometer.y = (signed short)((packet->payload[3] << 8)+(packet->payload[4]));
-  whill->accelerometer.z = (signed short)((packet->payload[5] << 8)+(packet->payload[6]));
-
-  whill->gyro.x = (signed short)((packet->payload[7] << 8)+(packet->payload[8]));
-  whill->gyro.y = (signed short)((packet->payload[9] << 8)+(packet->payload[10]));
-  whill->gyro.z = (signed short)((packet->payload[11] << 8)+(packet->payload[12]));
-
   whill->joy.y = (int)(signed char)packet->payload[13];
   whill->joy.x = (int)(signed char)packet->payload[14];
 
