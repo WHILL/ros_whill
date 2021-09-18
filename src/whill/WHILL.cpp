@@ -63,7 +63,7 @@ void WHILL::receivePacket(){
 
 void WHILL::refresh(){
     // Scan the data from interface
-   receivePacket();
+    receivePacket();
 }
 
 
