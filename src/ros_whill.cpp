@@ -32,7 +32,6 @@ SOFTWARE.
 #include "ros/ros.h"
 #include "sensor_msgs/Joy.h"
 #include "sensor_msgs/JointState.h"
-#include "sensor_msgs/Imu.h"
 #include "sensor_msgs/BatteryState.h"
 #include "nav_msgs/Odometry.h"
 
@@ -78,7 +77,6 @@ void safeDelete(T *&p)
 // Publishers
 ros::Publisher ros_joystick_state_publisher;
 ros::Publisher ros_jointstate_publisher;
-ros::Publisher ros_imu_publisher;
 ros::Publisher ros_battery_state_publisher;
 ros::Publisher ros_odom_publisher;
 
@@ -297,22 +295,6 @@ void whill_callback_data1(WHILL *caller)
     joy.axes[1] = caller->joy.y / 100.0f;  //Y
     ros_joystick_state_publisher.publish(joy);
 
-    // IMU
-    sensor_msgs::Imu imu;
-    imu.header.stamp = currentTime;
-    imu.header.frame_id = "imu";
-
-    imu.orientation_covariance[0] = -1; // Orientation is unknown
-
-    imu.angular_velocity.x = caller->gyro.x / 180 * M_PI; // deg per sec to rad/s
-    imu.angular_velocity.y = caller->gyro.y / 180 * M_PI; // deg per sec to rad/s
-    imu.angular_velocity.z = caller->gyro.z / 180 * M_PI; // deg per sec to rad/s
-
-    imu.linear_acceleration.x = caller->accelerometer.x * 9.80665; // G to m/ss
-    imu.linear_acceleration.y = caller->accelerometer.y * 9.80665; // G to m/ssnav_msgs::Odometry odom_msg = odom.getROSOdometry();
-    imu.linear_acceleration.z = caller->accelerometer.z * 9.80665; // G to m/ss
-    ros_imu_publisher.publish(imu);
-
     // Battery
     sensor_msgs::BatteryState batteryState;
     batteryState.header.stamp = currentTime;
@@ -430,7 +412,6 @@ int main(int argc, char **argv)
     // Publishers
     ros_joystick_state_publisher = nh.advertise<sensor_msgs::Joy>("states/joy", 100);
     ros_jointstate_publisher = nh.advertise<sensor_msgs::JointState>("states/jointState", 100);
-    ros_imu_publisher = nh.advertise<sensor_msgs::Imu>("states/imu", 100);
     ros_battery_state_publisher = nh.advertise<sensor_msgs::BatteryState>("states/batteryState", 100);
     ros_odom_publisher = nh.advertise<nav_msgs::Odometry>("odom", 100);
 
