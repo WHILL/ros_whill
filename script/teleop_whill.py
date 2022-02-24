@@ -3,7 +3,7 @@
 
 import rospy
 import readchar
-from whill.msg import msgWhillSetJoystick
+from sensor_msgs.msg import Joy
 
 
 def main():
@@ -11,7 +11,7 @@ def main():
     rospy.init_node('teleop_whill', anonymous=True)
     rospy.loginfo('teleop_whill: start')
 
-    teleop_pub = rospy.Publisher('whill_setjoystick', msgWhillSetJoystick, queue_size=10)
+    teleop_pub = rospy.Publisher('/whill/controller/joy', Joy, queue_size=10)
 
     rospy.loginfo("teleop command -> forward:'w', backward:'x', left:'a', right:'d', kill:'k'")
     front_val = 10 # TODO to parameter
@@ -21,23 +21,23 @@ def main():
 
     r = rospy.Rate(10.0)
     while not rospy.is_shutdown():
-        msg = msgWhillSetJoystick()
-        msg.front = 0
-        msg.side = 0
+        msg = Joy()
+        msg.axes[0] = 0
+        msg.axes[1] = 0
 
         key = readchar.readchar()
         if key == 'w':
-            msg.front = front_val
+            msg.axes[1] = front_val
         elif key == 'x':
-            msg.front = back_val
+            msg.axes[1] = back_val
         elif key == 'a':
-            msg.side = left_val
+            msg.axes[0] = left_val
         elif key == 'd':
-            msg.side = right_val
+            msg.axes[0] = right_val
         elif key == 'k':
             break
 
-        if msg.front != 0 or msg.side != 0:
+        if msg.axes[0] != 0 or msg.axes[1] != 0:
             teleop_pub.publish(msg)
             
             r.sleep()
