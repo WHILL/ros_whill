@@ -1,7 +1,13 @@
 # ros_whill
-ros_whill is a ROS package for [WHILL Model CR](https://whill.jp/model-cr).<br>
-We also have [a FAQ and developers community website](https://whill.zendesk.com/hc/ja) for current and potential Model CR users.<br>
-For general questions and requests, please visit https://whill.zendesk.com/hc/ja .
+ros_whill is a ROS package for [WHILL Model CR](https://whill.jp/model-cr) only.<br>
+
+## Status: End of life (EOL)
+
+**This repository is no longer supported.** The underlying ROS 1 distribution (Melodic) has reached [end of life](http://wiki.ros.org/Distributions), and this `ros_whill` package is not maintained as a supported integration.
+
+**Use** [**ros2_whill**](https://github.com/whill-labs/ros2_whill) — the maintained ROS 2 package for WHILL Model CR series (see that repository for setup, topics, and services).
+
+For new work, plan on ROS 2 and `ros2_whill` rather than this package.
 
 <img src="https://user-images.githubusercontent.com/2618822/45492944-89421c00-b7a8-11e8-9c92-22aa3f28f6e4.png" width=30%>
 
